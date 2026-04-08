@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yuketang-JS
 // @namespace    https://www.yuketang.cn/
-// @version      0.1.0
+// @version      0.2.0
 // @author       Harry Huang
 // @description  A Browser Script to Enhance Yuketang Experience
 // @license      MIT
