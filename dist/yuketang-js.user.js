@@ -40,6 +40,7 @@
     }
   };
   class ConfigManager {
+    config;
     constructor() {
       this.config = this._loadConfig();
     }
@@ -52,7 +53,8 @@
           return this._mergeWithDefaults(parsed);
         }
       } catch (err) {
-        log(`⚠️ Config load error: ${err.message}`);
+        const error = err;
+        log(`⚠️ Config load error: ${error.message}`);
       }
       log(`📋 Using default config`);
       return this._deepClone(DEFAULT_CONFIG);
@@ -73,7 +75,8 @@
         log(`💾 Config saved to storage`);
         return true;
       } catch (err) {
-        log(`❌ Config save error: ${err.message}`);
+        const error = err;
+        log(`❌ Config save error: ${error.message}`);
         return false;
       }
     }
@@ -85,7 +88,7 @@ setSelectedAudio(presetId) {
       return this._saveConfig();
     }
 getAudioConfig() {
-      return this._deepClone(this.config.audio);
+      return JSON.parse(JSON.stringify(this.config.audio));
     }
   }
   const config = new ConfigManager();
@@ -107,6 +110,12 @@ getAudioConfig() {
     }
   }
   class WsMitm {
+    originalWebSocket;
+    urlRegex;
+    onReceiveCallback;
+    onUploadCallback;
+    interceptedConnections;
+    isActive;
     constructor() {
       this.originalWebSocket = null;
       this.urlRegex = null;
@@ -142,14 +151,14 @@ setOnUpload(callback) {
         "📍 WebSocket MITM using window is " + (typeof unsafeWindow !== "undefined" ? "unsafeWindow" : "window")
       );
       const self = this;
-      targetWindow.WebSocket = class ProxyWebSocket extends self.originalWebSocket {
+      targetWindow.WebSocket = class ProxyWebSocket extends WebSocket {
         constructor(url, protocols) {
           super(url, protocols);
           log("🚧 WebSocket connection attempted to: " + url);
-          if (self.urlRegex.test(url)) {
+          if (self.urlRegex.test(url.toString())) {
             const wsId = `${url}_${Date.now()}_${Math.random()}`;
             self.interceptedConnections.set(wsId, {
-              url,
+              url: url.toString(),
               protocols,
               instance: this,
               messages: []
@@ -157,7 +166,7 @@ setOnUpload(callback) {
             const originalSend = this.send;
             this.send = function(data) {
               if (self.onUploadCallback) {
-                self.onUploadCallback(url, data);
+                self.onUploadCallback(url.toString(), data);
               }
               return originalSend.call(this, data);
             };
@@ -166,9 +175,13 @@ setOnUpload(callback) {
               if (eventType === "message") {
                 const wrappedListener = function(event) {
                   if (self.onReceiveCallback) {
-                    self.onReceiveCallback(url, event.data);
+                    self.onReceiveCallback(url.toString(), event.data);
                   }
-                  listener(event);
+                  if (typeof listener === "function") {
+                    listener(event);
+                  } else {
+                    listener.handleEvent(event);
+                  }
                 };
                 return originalAddEventListener.call(
                   this,
@@ -194,11 +207,12 @@ setOnUpload(callback) {
                 userOnMessage = callback;
                 const wrappedCallback = function(event) {
                   if (self.onReceiveCallback) {
-                    self.onReceiveCallback(url, event.data);
+                    self.onReceiveCallback(url.toString(), event.data);
                   }
                   if (userOnMessage) {
-                    userOnMessage.call(this, event);
+                    return userOnMessage.call(this, event);
                   }
+                  return void 0;
                 };
                 if (originalDescriptor && originalDescriptor.set) {
                   originalDescriptor.set.call(this, wrappedCallback);
@@ -234,14 +248,15 @@ setOnUpload(callback) {
     getInterceptedConnections() {
       return Array.from(this.interceptedConnections.values());
     }
-    isActive() {
+    isActiveMethod() {
       return this.isActive;
     }
   }
   const wsMitm = new WsMitm();
   class AudioController {
+    audioElement;
+    currentAudioData;
     constructor() {
-      this.currentAudioIndex = 0;
       this.audioElement = new Audio();
       this.currentAudioData = AUDIO_DATA[0];
       this._initializeAudio();
@@ -252,7 +267,6 @@ _restoreConfig() {
       if (audioConfig.selected && audioConfig.selected.startsWith("preset:")) {
         const presetId = parseInt(audioConfig.selected.split(":")[1]);
         if (presetId >= 0 && presetId < AUDIO_DATA.length) {
-          this.currentAudioIndex = presetId;
           this.currentAudioData = AUDIO_DATA[presetId];
           log(`🎵 Preset audio restored: ${AUDIO_DATA[presetId].name}`);
         }
@@ -271,7 +285,7 @@ play() {
       if (!this._isPlaying()) {
         this.audioElement.currentTime = 0;
         this.audioElement.play().catch((err) => {
-          log("❌ Audio play error:");
+          log(`❌ Audio play error: ${err}`);
         });
       }
     }
@@ -290,7 +304,6 @@ setAudio(nameOrIndex) {
         console.error(`Audio] Invalid audio index or name: ${nameOrIndex}`);
         return false;
       }
-      this.currentAudioIndex = newIndex;
       this.currentAudioData = AUDIO_DATA[newIndex];
       this._initializeAudio();
       config.setSelectedAudio(`preset:${newIndex}`);
@@ -7860,11 +7873,6 @@ update: debounce(function() {
       return instance;
     };
   }
-  var createPopper$2 = popperGenerator();
-  var defaultModifiers$1 = [eventListeners, popperOffsets$1, computeStyles$1, applyStyles$1];
-  var createPopper$1 = popperGenerator({
-    defaultModifiers: defaultModifiers$1
-  });
   var defaultModifiers = [eventListeners, popperOffsets$1, computeStyles$1, applyStyles$1, offset$1, flip$1, preventOverflow$1, arrow$1, hide$1];
   var createPopper = popperGenerator({
     defaultModifiers
@@ -7885,8 +7893,6 @@ update: debounce(function() {
     clippingParents,
     computeStyles: computeStyles$1,
     createPopper,
-    createPopperBase: createPopper$2,
-    createPopperLite: createPopper$1,
     detectOverflow,
     end,
     eventListeners,
@@ -11477,6 +11483,12 @@ static jQueryInterface(config2) {
   enableDismissTrigger(Toast);
   defineJQueryPlugin(Toast);
   class LessonHeaderUI {
+    $container;
+    $statusText;
+    $notifyBtn;
+    $settingsBtn;
+    $modal;
+    lastActiveTime;
     constructor() {
       this.$container = null;
       this.$statusText = null;
@@ -11518,13 +11530,17 @@ setActive() {
       );
       this.$notifyBtn = $(
         '<button id="yuketang-js-test-notification" class="btn btn-sm btn-primary"></button>'
-      ).text("发送测试通知").click(() => {
+      );
+      this.$notifyBtn.text("发送测试通知");
+      this.$notifyBtn.on("click", () => {
         notify("🆗 测试通知", "【点我消除通知】恭喜！通知系统工作正常。");
         audioController.play();
       });
       this.$settingsBtn = $(
         '<button id="yuketang-js-settings-btn" class="btn btn-sm btn-secondary"></button>'
-      ).text("脚本设置").click(() => {
+      );
+      this.$settingsBtn.text("脚本设置");
+      this.$settingsBtn.on("click", () => {
         this._openSettingsModal();
       });
       this.$container.append(this.$statusText).append(this.$notifyBtn).append(this.$settingsBtn);
@@ -11608,16 +11624,22 @@ setActive() {
         return;
       }
       if (this.lastActiveTime === null) {
-        this.$statusText.text("未监听").removeClass("bg-secondary bg-info").addClass("bg-danger");
+        this.$statusText.text("未监听");
+        this.$statusText.removeClass("bg-secondary bg-info");
+        this.$statusText.addClass("bg-danger");
         return;
       }
       const now = Date.now();
       const inactiveThreshold = 300 * 1e3;
       const timeSinceActive = now - this.lastActiveTime;
       if (timeSinceActive > inactiveThreshold) {
-        this.$statusText.text("无活动").removeClass("bg-danger bg-info").addClass("bg-secondary");
+        this.$statusText.text("无活动");
+        this.$statusText.removeClass("bg-danger bg-info");
+        this.$statusText.addClass("bg-secondary");
       } else {
-        this.$statusText.text("已监听").removeClass("bg-danger bg-secondary").addClass("bg-info");
+        this.$statusText.text("已监听");
+        this.$statusText.removeClass("bg-danger bg-secondary");
+        this.$statusText.addClass("bg-info");
       }
     }
     _openSettingsModal() {
@@ -11637,7 +11659,6 @@ setActive() {
     }
   }
   (function() {
-    let mitmSuccess = false;
     const headerUI = new LessonHeaderUI();
     wsMitm.startMitm(".*wsapp.*");
     wsMitm.onReceiveCallback = function(url, data) {
@@ -11647,7 +11668,6 @@ setActive() {
         if (json && json.op) {
           headerUI.setActive();
           if (json.op === R_HELLO) {
-            mitmSuccess = true;
             log("✅ WebSocket MITM is functioning correctly");
           } else if (json.op === R_UNLOCK_PROBLEM) {
             const limit = json.problem ? json.problem.limit || "N/A" : "N/A";

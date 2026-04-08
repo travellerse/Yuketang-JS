@@ -5,6 +5,13 @@ import { log, notify, audioController } from "./utils.js";
 import { config } from "./config.js";
 
 export class LessonHeaderUI {
+  private $container: JQuery | null;
+  private $statusText: JQuery | null;
+  private $notifyBtn: JQuery | null;
+  private $settingsBtn: JQuery | null;
+  private $modal: JQuery | null;
+  private lastActiveTime: number | null;
+
   constructor() {
     this.$container = null;
     this.$statusText = null;
@@ -17,7 +24,7 @@ export class LessonHeaderUI {
   /**
    * Ensures the UI is injected and updates all status.
    */
-  update() {
+  update(): void {
     this._ensureInjected();
     this._updateStatusDisplay();
   }
@@ -25,12 +32,12 @@ export class LessonHeaderUI {
   /**
    * Mark as active and update lastActiveTime.
    */
-  setActive() {
+  setActive(): void {
     this.lastActiveTime = Date.now();
     this._updateStatusDisplay();
   }
 
-  _ensureInjected() {
+  private _ensureInjected(): void {
     // Check if already injected
     if (this.$container && this.$container.length > 0) {
       return;
@@ -53,27 +60,27 @@ export class LessonHeaderUI {
     }
 
     this.$container = $(
-      '<div id="yuketang-js-ui-container" class="d-inline-flex align-items-center gap-2"></div>'
+      '<div id="yuketang-js-ui-container" class="d-inline-flex align-items-center gap-2"></div>',
     );
     this.$statusText = $(
       '<span id="yuketang-js-status-text" class="badge"></span>'
     );
     this.$notifyBtn = $(
       '<button id="yuketang-js-test-notification" class="btn btn-sm btn-primary"></button>'
-    )
-      .text("发送测试通知")
-      .click(() => {
-        notify("🆗 测试通知", "【点我消除通知】恭喜！通知系统工作正常。");
-        audioController.play();
-      });
+    );
+    this.$notifyBtn.text("发送测试通知");
+    this.$notifyBtn.on("click", () => {
+      notify("🆗 测试通知", "【点我消除通知】恭喜！通知系统工作正常。");
+      audioController.play();
+    });
 
     this.$settingsBtn = $(
       '<button id="yuketang-js-settings-btn" class="btn btn-sm btn-secondary"></button>'
-    )
-      .text("脚本设置")
-      .click(() => {
-        this._openSettingsModal();
-      });
+    );
+    this.$settingsBtn.text("脚本设置");
+    this.$settingsBtn.on("click", () => {
+      this._openSettingsModal();
+    });
 
     this.$container
       .append(this.$statusText)
@@ -87,7 +94,7 @@ export class LessonHeaderUI {
     log("🔲 UI container added to lesson__header");
   }
 
-  _createModal() {
+  private _createModal(): void {
     if (this.$modal && this.$modal.length > 0) {
       return;
     }
@@ -132,7 +139,7 @@ export class LessonHeaderUI {
     this._populateAudioOptions();
   }
 
-  _populateAudioOptions() {
+  private _populateAudioOptions(): void {
     const $audioOptions = $("#yuketang-js-audio-options");
     const audioData = [
       { id: 0, name: "默认提示音 1" },
@@ -148,8 +155,8 @@ export class LessonHeaderUI {
         </div>
       `);
 
-      $radio.on("change", (e) => {
-        const selectedId = parseInt($(e.target).val());
+      $radio.on("change", (e: Event) => {
+        const selectedId = parseInt($(e.target as HTMLElement).val() as string);
         audioController.setAudio(selectedId);
         log(`🎵 Audio changed to: ${audio.name}`);
       });
@@ -171,17 +178,16 @@ export class LessonHeaderUI {
     }
   }
 
-  _updateStatusDisplay() {
+  private _updateStatusDisplay(): void {
     if (!this.$statusText || this.$statusText.length === 0) {
       return;
     }
 
     // If never active
     if (this.lastActiveTime === null) {
-      this.$statusText
-        .text("未监听")
-        .removeClass("bg-secondary bg-info")
-        .addClass("bg-danger");
+      this.$statusText.text("未监听");
+      this.$statusText.removeClass("bg-secondary bg-info");
+      this.$statusText.addClass("bg-danger");
       return;
     }
 
@@ -190,19 +196,17 @@ export class LessonHeaderUI {
     const timeSinceActive = now - this.lastActiveTime;
 
     if (timeSinceActive > inactiveThreshold) {
-      this.$statusText
-        .text("无活动")
-        .removeClass("bg-danger bg-info")
-        .addClass("bg-secondary");
+      this.$statusText.text("无活动");
+      this.$statusText.removeClass("bg-danger bg-info");
+      this.$statusText.addClass("bg-secondary");
     } else {
-      this.$statusText
-        .text("已监听")
-        .removeClass("bg-danger bg-secondary")
-        .addClass("bg-info");
+      this.$statusText.text("已监听");
+      this.$statusText.removeClass("bg-danger bg-secondary");
+      this.$statusText.addClass("bg-info");
     }
   }
 
-  _openSettingsModal() {
+  private _openSettingsModal(): void {
     if (!this.$modal || this.$modal.length === 0) {
       this._createModal();
     }
@@ -222,7 +226,7 @@ export class LessonHeaderUI {
         log("⏹️ All audio stopped");
       });
 
-    const modalInstance = new bootstrap.Modal(this.$modal[0]);
+    const modalInstance = new bootstrap.Modal(this.$modal![0]);
     modalInstance.show();
   }
 }
