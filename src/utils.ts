@@ -84,7 +84,7 @@ export class WsMitm {
     this.originalWebSocket = targetWindow.WebSocket;
     log(
       "📍 WebSocket MITM using window is " +
-        (typeof unsafeWindow !== "undefined" ? "unsafeWindow" : "window")
+        (typeof unsafeWindow !== "undefined" ? "unsafeWindow" : "window"),
     );
 
     const self = this;
@@ -105,7 +105,9 @@ export class WsMitm {
           });
 
           const originalSend = this.send;
-          this.send = function (data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+          this.send = function (
+            data: string | ArrayBufferLike | Blob | ArrayBufferView,
+          ): void {
             if (self.onUploadCallback) {
               self.onUploadCallback(url.toString(), data as string);
             }
@@ -116,12 +118,15 @@ export class WsMitm {
           this.addEventListener = function (
             eventType: string,
             listener: EventListenerOrEventListenerObject,
-            options?: boolean | AddEventListenerOptions
+            options?: boolean | AddEventListenerOptions,
           ): void {
             if (eventType === "message") {
               const wrappedListener = function (event: Event): void {
                 if (self.onReceiveCallback) {
-                  self.onReceiveCallback(url.toString(), (event as MessageEvent).data as string);
+                  self.onReceiveCallback(
+                    url.toString(),
+                    (event as MessageEvent).data as string,
+                  );
                 }
                 if (typeof listener === "function") {
                   listener(event);
@@ -133,30 +138,40 @@ export class WsMitm {
                 this,
                 eventType,
                 wrappedListener as EventListenerOrEventListenerObject,
-                options
+                options,
               );
             }
             return originalAddEventListener.call(
               this,
               eventType,
               listener,
-              options
+              options,
             );
           };
 
           const originalDescriptor = Object.getOwnPropertyDescriptor(
             Object.getPrototypeOf(this),
-            "onmessage"
+            "onmessage",
           );
 
-          let userOnMessage: ((this: WebSocket, ev: MessageEvent) => unknown) | null = null;
+          let userOnMessage:
+            | ((this: WebSocket, ev: MessageEvent) => unknown)
+            | null = null;
 
           Object.defineProperty(this, "onmessage", {
-            set: function (callback: ((this: WebSocket, ev: MessageEvent) => unknown) | null) {
+            set: function (
+              callback: ((this: WebSocket, ev: MessageEvent) => unknown) | null,
+            ) {
               userOnMessage = callback;
-              const wrappedCallback = function (this: WebSocket, event: Event): unknown {
+              const wrappedCallback = function (
+                this: WebSocket,
+                event: Event,
+              ): unknown {
                 if (self.onReceiveCallback) {
-                  self.onReceiveCallback(url.toString(), (event as MessageEvent).data as string);
+                  self.onReceiveCallback(
+                    url.toString(),
+                    (event as MessageEvent).data as string,
+                  );
                 }
                 if (userOnMessage) {
                   return userOnMessage.call(this, event as MessageEvent);
@@ -164,10 +179,20 @@ export class WsMitm {
                 return undefined;
               };
               if (originalDescriptor && originalDescriptor.set) {
-                originalDescriptor.set.call(this, wrappedCallback as ((this: WebSocket, ev: MessageEvent) => unknown));
+                originalDescriptor.set.call(
+                  this,
+                  wrappedCallback as (
+                    this: WebSocket,
+                    ev: MessageEvent,
+                  ) => unknown,
+                );
               } else {
                 // Fallback
-                originalAddEventListener.call(this, "message", wrappedCallback as EventListenerOrEventListenerObject);
+                originalAddEventListener.call(
+                  this,
+                  "message",
+                  wrappedCallback as EventListenerOrEventListenerObject,
+                );
               }
             },
             get: function () {
