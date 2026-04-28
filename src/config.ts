@@ -6,13 +6,27 @@ interface AudioConfig {
   selected: string;
 }
 
+interface LlmConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  reasoningEffort: string;
+}
+
 interface Config {
   audio: AudioConfig;
+  llm: LlmConfig;
 }
 
 const DEFAULT_CONFIG: Config = {
   audio: {
     selected: "preset:0",
+  },
+  llm: {
+    baseUrl: "",
+    apiKey: "",
+    model: "",
+    reasoningEffort: "high",
   },
 };
 
@@ -43,6 +57,13 @@ class ConfigManager {
     return {
       audio: {
         selected: loaded.audio?.selected ?? DEFAULT_CONFIG.audio.selected,
+      },
+      llm: {
+        baseUrl: loaded.llm?.baseUrl ?? DEFAULT_CONFIG.llm.baseUrl,
+        apiKey: loaded.llm?.apiKey ?? DEFAULT_CONFIG.llm.apiKey,
+        model: loaded.llm?.model ?? DEFAULT_CONFIG.llm.model,
+        reasoningEffort:
+          loaded.llm?.reasoningEffort ?? DEFAULT_CONFIG.llm.reasoningEffort,
       },
     };
   }
@@ -86,6 +107,15 @@ class ConfigManager {
    */
   getAudioConfig(): AudioConfig {
     return JSON.parse(JSON.stringify(this.config.audio)) as AudioConfig;
+  }
+
+  getLlmConfig(): LlmConfig {
+    return JSON.parse(JSON.stringify(this.config.llm)) as LlmConfig;
+  }
+
+  setLlmConfig(newConfig: Partial<LlmConfig>): boolean {
+    this.config.llm = { ...this.config.llm, ...newConfig };
+    return this._saveConfig();
   }
 }
 

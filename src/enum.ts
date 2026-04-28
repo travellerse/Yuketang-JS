@@ -66,3 +66,8 @@ export const R_PROBLEM_FINISHED = "problemfinished";
  * `{"op":"extendtime","lessonid":"123456789","problem":{"type":"problem","prob":"123456789","pres":"123456789","si":null,"sid":"123456789","dt":1777777777779,"limit":47,"extend":30,"now":1777777777779}}`
  */
 export const R_EXTEND_TIME = "extendtime";
+
+/**
+ * `{"op":"callpaused","msgid":1777000000000,"lessonid":"123456789","uid":123456789,"name":"小明","avatar":"http://qn-sx.yuketang.cn/example.png","sid":"U12345678","dt":1777000000000,"event":{"type":"event","title":"随机点名选中：小明 U12345678","code":"RANDOM_PICK","replace":["小明","U12345678"],"show":true,"dt":1777000000000}}`
+ */
+export const R_CALL_PAUSED = "callpaused";

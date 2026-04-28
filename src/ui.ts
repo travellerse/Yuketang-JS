@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.css";
 import * as bootstrap from "bootstrap";
 import { log, notify, audioController } from "./utils.js";
 import { config } from "./config.js";
+import OpenAI from "openai";
 
 export class LessonHeaderUI {
   private $container: JQuery | null;
@@ -63,10 +64,10 @@ export class LessonHeaderUI {
       '<div id="yuketang-js-ui-container" class="d-inline-flex align-items-center gap-2"></div>',
     );
     this.$statusText = $(
-      '<span id="yuketang-js-status-text" class="badge"></span>'
+      '<span id="yuketang-js-status-text" class="badge"></span>',
     );
     this.$notifyBtn = $(
-      '<button id="yuketang-js-test-notification" class="btn btn-sm btn-primary"></button>'
+      '<button id="yuketang-js-test-notification" class="btn btn-sm btn-primary"></button>',
     );
     this.$notifyBtn.text("发送测试通知");
     this.$notifyBtn.on("click", () => {
@@ -75,7 +76,7 @@ export class LessonHeaderUI {
     });
 
     this.$settingsBtn = $(
-      '<button id="yuketang-js-settings-btn" class="btn btn-sm btn-secondary"></button>'
+      '<button id="yuketang-js-settings-btn" class="btn btn-sm btn-secondary"></button>',
     );
     this.$settingsBtn.text("脚本设置");
     this.$settingsBtn.on("click", () => {
@@ -100,7 +101,7 @@ export class LessonHeaderUI {
     }
 
     const modalHtml = `
-      <div class="modal fade" id="yuketang-js-settings-modal" tabindex="-1" aria-labelledby="yuketang-js-settings-modal-label" aria-hidden="true">
+      <div class="modal fade" id="yuketang-js-settings-modal" aria-labelledby="yuketang-js-settings-modal-label" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
@@ -112,6 +113,11 @@ export class LessonHeaderUI {
                 <li class="nav-item" role="presentation">
                   <button class="nav-link active" id="yuketang-js-classroom-alert-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom-alert" type="button" role="tab" aria-controls="yuketang-js-classroom-alert" aria-selected="true">
                     通知音频设置
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="yuketang-js-llm-settings-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-llm-settings" type="button" role="tab" aria-controls="yuketang-js-llm-settings" aria-selected="false">
+                    大模型设置
                   </button>
                 </li>
               </ul>
@@ -126,6 +132,34 @@ export class LessonHeaderUI {
                     <div id="yuketang-js-audio-options"></div>
                   </div>
                 </div>
+                <div class="tab-pane fade" id="yuketang-js-llm-settings" role="tabpanel" aria-labelledby="yuketang-js-llm-settings-tab">
+                  <div class="mt-3">
+                    <div class="mb-3">
+                      <label for="yuketang-js-llm-baseurl" class="form-label">API Base URL</label>
+                      <input type="text" class="form-control" id="yuketang-js-llm-baseurl" placeholder="https://...">
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-llm-apikey" class="form-label">API Key</label>
+                      <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-llm-model" class="form-label">模型名称</label>
+                      <input type="text" class="form-control" id="yuketang-js-llm-model">
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-llm-reasoning" class="form-label">推理强度</label>
+                      <select class="form-select" id="yuketang-js-llm-reasoning">
+                        <option value="low">low</option>
+                        <option value="medium">medium</option>
+                        <option value="high">high</option>
+                        <option value="xhigh">xhigh</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <button id="yuketang-js-llm-test-btn" class="btn btn-primary">测试大模型功能</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -137,6 +171,79 @@ export class LessonHeaderUI {
     this.$modal = $("#yuketang-js-settings-modal");
 
     this._populateAudioOptions();
+    this._populateLlmOptions();
+  }
+
+  private _populateLlmOptions(): void {
+    const llmConfig = config.getLlmConfig();
+    const $baseUrl = $("#yuketang-js-llm-baseurl");
+    const $apiKey = $("#yuketang-js-llm-apikey");
+    const $model = $("#yuketang-js-llm-model");
+    const $reasoning = $("#yuketang-js-llm-reasoning");
+
+    $baseUrl.val(llmConfig.baseUrl);
+    $apiKey.val(llmConfig.apiKey);
+    $model.val(llmConfig.model);
+    $reasoning.val(llmConfig.reasoningEffort);
+
+    const updateConfig = () => {
+      config.setLlmConfig({
+        baseUrl: $baseUrl.val() as string,
+        apiKey: $apiKey.val() as string,
+        model: $model.val() as string,
+        reasoningEffort: $reasoning.val() as string,
+      });
+    };
+
+    $baseUrl.on("change", updateConfig);
+    $apiKey.on("change", updateConfig);
+    $model.on("change", updateConfig);
+    $reasoning.on("change", updateConfig);
+
+    $("#yuketang-js-llm-test-btn").on("click", async () => {
+      const baseUrl = $baseUrl.val() as string;
+      const apiKey = $apiKey.val() as string;
+      const model = $model.val() as string;
+      const reasoningEffort = $reasoning.val() as string;
+
+      if (!baseUrl || !apiKey || !model) {
+        alert(
+          "请完整填写大模型配置(API Base URL、API Key、模型名称均不可以为空)！",
+        );
+        return;
+      }
+
+      const openai = new OpenAI({
+        baseURL: baseUrl,
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true, // We are in a browser extension context
+      });
+
+      try {
+        const btn = $("#yuketang-js-llm-test-btn");
+        btn.prop("disabled", true).text("测试中...");
+
+        const completion = await openai.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are a helpful assistant." },
+            { role: "user", content: 'If you can see this, please say "OK".' },
+          ],
+          model: model,
+          thinking: { type: "enabled" },
+          reasoning_effort: reasoningEffort,
+          stream: false,
+        } as any);
+
+        const reply = completion.choices[0]?.message?.content;
+        alert(`测试完成。模型回复:\n${reply}`);
+      } catch (e: any) {
+        alert(`测试失败:\n${e.message}`);
+      } finally {
+        $("#yuketang-js-llm-test-btn")
+          .prop("disabled", false)
+          .text("测试大模型功能");
+      }
+    });
   }
 
   private _populateAudioOptions(): void {
