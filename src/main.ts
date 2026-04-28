@@ -3,20 +3,8 @@ import { R_HELLO, R_UNLOCK_PROBLEM, R_EXTEND_TIME } from "./enum.js";
 import { log, notify, wsMitm, audioController } from "./utils.js";
 import { LessonHeaderUI, showBanner } from "./ui.js";
 import { XHRSpy } from "./xhr-spy.js";
-import { handleProblem } from "./problem-solver.js";
+import { problemSolver } from "./problem-solver.js";
 import { config } from "./config.js";
-
-// Define the interface for the problem data we want to store
-interface ExtractedProblem {
-  problemId: string;
-  problemType: number;
-  body: string;
-  options?: { key: string; value: string }[];
-  blanks?: { num: number }[];
-  hasAutoAnswered?: boolean;
-}
-
-export const problemsDict = new Map<string, ExtractedProblem>();
 
 (function (): void {
   "use strict";
@@ -28,19 +16,15 @@ export const problemsDict = new Map<string, ExtractedProblem>();
       for (const slide of json.data.slides) {
         if (slide.problem) {
           const p = slide.problem;
-          const extracted: ExtractedProblem = {
+          const extracted = {
             problemId: p.problemId,
             problemType: p.problemType,
             body: p.body,
             hasAutoAnswered: false,
+            options: p.options,
+            blanks: p.blanks,
           };
-          if (p.options) {
-            extracted.options = p.options;
-          }
-          if (p.blanks) {
-            extracted.blanks = p.blanks;
-          }
-          problemsDict.set(p.problemId, extracted);
+          problemSolver.addProblem(p.problemId, extracted);
           count++;
         }
       }
@@ -52,7 +36,7 @@ export const problemsDict = new Map<string, ExtractedProblem>();
 
   const scheduleAutoAnswer = (problemId: string, limit: string | number) => {
     const aaConfig = config.getAutoAnswerConfig();
-    const problem = problemsDict.get(problemId);
+    const problem = problemSolver.getProblem(problemId);
 
     if (aaConfig.enabled && problem && !problem.hasAutoAnswered) {
       const numLimit = typeof limit === "string" ? parseInt(limit, 10) : limit;
@@ -72,10 +56,10 @@ export const problemsDict = new Map<string, ExtractedProblem>();
       }
 
       setTimeout(() => {
-        const p = problemsDict.get(problemId);
+        const p = problemSolver.getProblem(problemId);
         if (p && !p.hasAutoAnswered) {
           log(`🤖 Auto answering ${problemId}...`);
-          handleProblem(problemId).catch(console.error);
+          problemSolver.handleProblem(problemId).catch(console.error);
         }
       }, delayMs);
     }
