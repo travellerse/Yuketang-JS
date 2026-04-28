@@ -13,9 +13,16 @@ interface LlmConfig {
   reasoningEffort: string;
 }
 
+interface AutoAnswerConfig {
+  enabled: boolean;
+  timeLeftThreshold: number;
+  timeAfterSend: number;
+}
+
 interface Config {
   audio: AudioConfig;
   llm: LlmConfig;
+  autoAnswer: AutoAnswerConfig;
 }
 
 const DEFAULT_CONFIG: Config = {
@@ -27,6 +34,11 @@ const DEFAULT_CONFIG: Config = {
     apiKey: "",
     model: "",
     reasoningEffort: "high",
+  },
+  autoAnswer: {
+    enabled: false,
+    timeLeftThreshold: 30,
+    timeAfterSend: 15,
   },
 };
 
@@ -64,6 +76,16 @@ class ConfigManager {
         model: loaded.llm?.model ?? DEFAULT_CONFIG.llm.model,
         reasoningEffort:
           loaded.llm?.reasoningEffort ?? DEFAULT_CONFIG.llm.reasoningEffort,
+      },
+      autoAnswer: {
+        enabled:
+          loaded.autoAnswer?.enabled ?? DEFAULT_CONFIG.autoAnswer.enabled,
+        timeLeftThreshold:
+          loaded.autoAnswer?.timeLeftThreshold ??
+          DEFAULT_CONFIG.autoAnswer.timeLeftThreshold,
+        timeAfterSend:
+          loaded.autoAnswer?.timeAfterSend ??
+          DEFAULT_CONFIG.autoAnswer.timeAfterSend,
       },
     };
   }
@@ -115,6 +137,17 @@ class ConfigManager {
 
   setLlmConfig(newConfig: Partial<LlmConfig>): boolean {
     this.config.llm = { ...this.config.llm, ...newConfig };
+    return this._saveConfig();
+  }
+
+  getAutoAnswerConfig(): AutoAnswerConfig {
+    return JSON.parse(
+      JSON.stringify(this.config.autoAnswer),
+    ) as AutoAnswerConfig;
+  }
+
+  setAutoAnswerConfig(newConfig: Partial<AutoAnswerConfig>): boolean {
+    this.config.autoAnswer = { ...this.config.autoAnswer, ...newConfig };
     return this._saveConfig();
   }
 }

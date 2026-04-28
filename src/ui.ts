@@ -120,6 +120,11 @@ export class LessonHeaderUI {
                     大模型设置
                   </button>
                 </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="yuketang-js-auto-answer-settings-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-auto-answer-settings" type="button" role="tab" aria-controls="yuketang-js-auto-answer-settings" aria-selected="false">
+                    答题设置
+                  </button>
+                </li>
               </ul>
               <div class="tab-content" id="yuketang-js-settings-tabs-content">
                 <div class="tab-pane fade show active" id="yuketang-js-classroom-alert" role="tabpanel" aria-labelledby="yuketang-js-classroom-alert-tab">
@@ -160,6 +165,22 @@ export class LessonHeaderUI {
                     </div>
                   </div>
                 </div>
+                <div class="tab-pane fade" id="yuketang-js-auto-answer-settings" role="tabpanel" aria-labelledby="yuketang-js-auto-answer-settings-tab">
+                  <div class="mt-3">
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
+                      <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-aa-time-left" class="form-label">限时题目在截止前多少秒启动自动答题</label>
+                      <input type="number" class="form-control" id="yuketang-js-aa-time-left" value="30">
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-aa-time-after" class="form-label">不现时题目在收到题目后多少秒启动自动答题</label>
+                      <input type="number" class="form-control" id="yuketang-js-aa-time-after" value="15">
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -172,6 +193,30 @@ export class LessonHeaderUI {
 
     this._populateAudioOptions();
     this._populateLlmOptions();
+    this._populateAutoAnswerOptions();
+  }
+
+  private _populateAutoAnswerOptions(): void {
+    const aaConfig = config.getAutoAnswerConfig();
+    const $enabled = $("#yuketang-js-aa-enabled");
+    const $timeLeft = $("#yuketang-js-aa-time-left");
+    const $timeAfter = $("#yuketang-js-aa-time-after");
+
+    $enabled.prop("checked", aaConfig.enabled);
+    $timeLeft.val(aaConfig.timeLeftThreshold);
+    $timeAfter.val(aaConfig.timeAfterSend);
+
+    const updateConfig = () => {
+      config.setAutoAnswerConfig({
+        enabled: Boolean($enabled.prop("checked")),
+        timeLeftThreshold: parseInt($timeLeft.val() as string, 10) || 30,
+        timeAfterSend: parseInt($timeAfter.val() as string, 10) || 15,
+      });
+    };
+
+    $enabled.on("change", updateConfig);
+    $timeLeft.on("change", updateConfig);
+    $timeAfter.on("change", updateConfig);
   }
 
   private _populateLlmOptions(): void {
@@ -221,7 +266,8 @@ export class LessonHeaderUI {
 
       try {
         const btn = $("#yuketang-js-llm-test-btn");
-        btn.prop("disabled", true).text("测试中...");
+        btn.prop("disabled", true);
+        btn.text("测试中...");
 
         const completion = await openai.chat.completions.create({
           messages: [
@@ -239,9 +285,9 @@ export class LessonHeaderUI {
       } catch (e: any) {
         alert(`测试失败:\n${e.message}`);
       } finally {
-        $("#yuketang-js-llm-test-btn")
-          .prop("disabled", false)
-          .text("测试大模型功能");
+        const btn = $("#yuketang-js-llm-test-btn");
+        btn.prop("disabled", false);
+        btn.text("测试大模型功能");
       }
     });
   }
@@ -336,4 +382,29 @@ export class LessonHeaderUI {
     const modalInstance = new bootstrap.Modal(this.$modal![0]);
     modalInstance.show();
   }
+}
+
+export function showBanner(
+  message: string,
+  type: "info" | "success" | "danger" | "warning" = "info",
+): void {
+  const containerId = "yuketang-js-banner-container";
+  let $container = $(`#${containerId}`);
+
+  if ($container.length === 0) {
+    // Make sure we have a container injected into body
+    $container = $(
+      `<div id="${containerId}" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 80%; max-width: 600px;"></div>`,
+    );
+    $("body").append($container);
+  }
+
+  const html = `
+    <div class="alert alert-${type} alert-dismissible fade show shadow-sm" role="alert">
+      <strong>[Yuketang-JS]</strong> ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+
+  $container.append(html);
 }
