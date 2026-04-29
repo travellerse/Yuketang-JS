@@ -27,6 +27,10 @@ export class ProblemSolver {
     return this.problemsDict.get(problemId);
   }
 
+  getProblemCount(): number {
+    return this.problemsDict.size;
+  }
+
   async handleProblem(problemId: string): Promise<void> {
     const problem = this.getProblem(problemId);
     if (!problem) {

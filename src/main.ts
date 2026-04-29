@@ -29,6 +29,10 @@ import { config } from "./config.js";
         }
       }
       log(`📄 Extracted ${count} problems from presentation fetch`);
+      showBanner(
+        `当前课堂总计的题目数量是 ${problemSolver.getProblemCount()} 道`,
+        "info",
+      );
     }
   });
 

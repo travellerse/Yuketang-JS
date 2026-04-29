@@ -401,7 +401,7 @@ export function showBanner(
 
   const html = `
     <div class="alert alert-${type} alert-dismissible fade show shadow-sm" role="alert">
-      <strong>[Yuketang-JS]</strong>${message}
+      <strong>[Yuketang-JS]</strong>&nbsp;${message}
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   `;
