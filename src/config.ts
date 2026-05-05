@@ -1,4 +1,5 @@
-import { log } from "./utils.js";
+import { log } from "./utils/log.js";
+import { showStaleConfigWarning } from "./ui/settings-modal.js";
 
 const CONFIG_KEY = "yuketang-js-config";
 
@@ -23,6 +24,7 @@ interface Config {
   audio: AudioConfig;
   llm: LlmConfig;
   autoAnswer: AutoAnswerConfig;
+  hash: string;
 }
 
 const DEFAULT_CONFIG: Config = {
@@ -40,13 +42,16 @@ const DEFAULT_CONFIG: Config = {
     timeLeftThreshold: 30,
     timeAfterSend: 15,
   },
+  hash: "",
 };
 
 class ConfigManager {
   private config: Config;
+  private _monitorTimer: ReturnType<typeof setInterval> | null;
 
   constructor() {
     this.config = this._loadConfig();
+    this._monitorTimer = null;
   }
 
   private _loadConfig(): Config {
@@ -87,6 +92,7 @@ class ConfigManager {
           loaded.autoAnswer?.timeAfterSend ??
           DEFAULT_CONFIG.autoAnswer.timeAfterSend,
       },
+      hash: loaded.hash ?? "",
     };
   }
 
@@ -94,8 +100,26 @@ class ConfigManager {
     return JSON.parse(JSON.stringify(obj));
   }
 
+  private _computeHash(data: Omit<Config, "hash">): string {
+    const json = JSON.stringify(data);
+    let hash = 5381;
+    for (let i = 0; i < json.length; i++) {
+      hash = ((hash << 5) + hash + json.charCodeAt(i)) >>> 0;
+    }
+    return hash.toString(36);
+  }
+
+  private _getContent(): Omit<Config, "hash"> {
+    return {
+      audio: this.config.audio,
+      llm: this.config.llm,
+      autoAnswer: this.config.autoAnswer,
+    };
+  }
+
   private _saveConfig(): boolean {
     try {
+      this.config.hash = this._computeHash(this._getContent());
       GM_setValue(CONFIG_KEY, JSON.stringify(this.config));
       log(`💾 Config saved to storage`);
       return true;
@@ -103,6 +127,61 @@ class ConfigManager {
       const error = err as Error;
       log(`❌ Config save error: ${error.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Checks if the config in GM storage differs from the in-memory config,
+   * indicating it was modified in another tab.
+   */
+  checkForExternalChanges(): boolean {
+    try {
+      const stored = GM_getValue<string | null>(CONFIG_KEY, null);
+      if (!stored) return false;
+      const parsed = JSON.parse(stored) as Partial<Config>;
+      if (!parsed.hash) return false;
+      const currentHash = this._computeHash(this._getContent());
+      return parsed.hash !== currentHash;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Reloads config from GM storage to pick up external changes.
+   */
+  reloadFromStorage(): void {
+    this.config = this._loadConfig();
+    log(`🔄 Config reloaded from storage`);
+  }
+
+  /**
+   * Starts periodic monitoring for config changes made in other tabs.
+   * @param interval - Check interval in ms (default 10000)
+   * @param onChange - Callback when external change is detected (default: show stale config warning)
+   * @param fastStop - If true, stop monitoring after first detection (default true)
+   */
+  startConfigChangeMonitor(
+    interval: number = 10000,
+    onChange: () => void = showStaleConfigWarning,
+    fastStop: boolean = true,
+  ): void {
+    this.stopConfigChangeMonitor();
+    this._monitorTimer = setInterval(() => {
+      if (this.checkForExternalChanges()) {
+        log(`⚠️ Config changed in another tab`);
+        if (fastStop) {
+          this.stopConfigChangeMonitor();
+        }
+        onChange();
+      }
+    }, interval);
+  }
+
+  stopConfigChangeMonitor(): void {
+    if (this._monitorTimer !== null) {
+      clearInterval(this._monitorTimer);
+      this._monitorTimer = null;
     }
   }
 

@@ -1,6 +1,6 @@
 import { config } from "./config.js";
-import { log } from "./utils.js";
-import { showBanner } from "./ui.js";
+import { log } from "./utils/log.js";
+import { showBanner } from "./ui/banner.js";
 import OpenAI from "openai";
 
 export interface ExtractedProblem {

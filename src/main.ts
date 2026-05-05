@@ -1,8 +1,12 @@
-import "./style.css";
 import { R_HELLO, R_UNLOCK_PROBLEM, R_EXTEND_TIME } from "./enum.js";
-import { log, notify, wsMitm, audioController } from "./utils.js";
-import { LessonHeaderUI, showBanner } from "./ui.js";
-import { XHRSpy } from "./xhr-spy.js";
+import { log } from "./utils/log.js";
+import { notify } from "./utils/notify.js";
+import { wsMitm } from "./utils/ws-mitm.js";
+import { audioController } from "./utils/audio-controller.js";
+import { XHRSpy } from "./utils/xhr-spy.js";
+import { LessonHeaderUI } from "./ui/header.js";
+import { GeneralHeaderUI } from "./ui/general-header.js";
+import { showBanner } from "./ui/banner.js";
 import { problemSolver } from "./problem-solver.js";
 import { config } from "./config.js";
 
@@ -37,6 +41,7 @@ import { config } from "./config.js";
   });
 
   const headerUI = new LessonHeaderUI();
+  const generalHeaderUI = new GeneralHeaderUI();
 
   const scheduleAutoAnswer = (problemId: string, limit: string | number) => {
     const aaConfig = config.getAutoAnswerConfig();
@@ -123,7 +128,10 @@ import { config } from "./config.js";
 
   log("🚀 Yuketang-JS script successfully loaded!");
 
+  config.startConfigChangeMonitor();
+
   setInterval(function (): void {
     headerUI.update();
+    generalHeaderUI.update();
   }, 1000);
 })();
