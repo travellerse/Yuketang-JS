@@ -66,14 +66,13 @@ export class GeneralHeaderUI {
 
   private _startOnLessonList(): void {
     const html = `
-      <div id="yuketang-js-on-lesson-panel" class="card" style="
-        position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      <div id="yuketang-js-on-lesson-panel" class="card position-fixed bottom-0 start-50 translate-middle-x border-0" style="
         z-index: 9998; width: 680px; max-width: 95vw;
-        border-radius: 12px 12px 0 0; border: none;
+        border-radius: 12px 12px 0 0;
         box-shadow: 0 -2px 16px rgba(0,0,0,0.12);
       ">
-        <div class="card-header d-flex justify-content-between align-items-center py-2"
-             style="cursor: pointer; border-radius: 12px 12px 0 0; background: #f8f9fa;"
+        <div class="card-header d-flex justify-content-between align-items-center py-2 cursor-pointer bg-body-secondary"
+             style="border-radius: 12px 12px 0 0;"
              data-bs-toggle="collapse" data-bs-target="#yuketang-js-on-lesson-body">
           <span class="fw-semibold" style="font-size: 0.9rem;">
             Yuketang-JS 上课教室列表（实时刷新）
@@ -82,8 +81,8 @@ export class GeneralHeaderUI {
           <span id="yuketang-js-on-lesson-chevron" class="bi bi-chevron-up" style="font-size: 0.8rem; transition: transform 0.2s;"></span>
         </div>
         <div id="yuketang-js-on-lesson-body" class="collapse show">
-          <div id="yuketang-js-on-lesson-list" class="card-body d-flex flex-column gap-2 py-3"
-               style="max-height: 300px; overflow-y: auto;">
+          <div id="yuketang-js-on-lesson-list" class="card-body d-flex flex-column gap-2 py-3 overflow-auto"
+               style="max-height: 300px;">
           </div>
         </div>
       </div>
