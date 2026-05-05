@@ -56,12 +56,21 @@ Please analyze the following question and its options/blanks, and provide the co
 
 Note:
 - Return ONLY valid JSON in the format ["Answer1", "Answer2"].
-${problem.blanks ? `- Use the language the question used to answer.` : ""}
+- In any situation, even if you don't have enough context or confidence to give the correct answer, you STILL need to provide a available answer.
+${problem.options ? `- For single/multiple choice problems, you need to provide the option's code but not its description text.` : ""}
+${problem.blanks ? `- Use the language the question used to fill in the blank.` : ""}
 
-Problem Type: ${getProblemTypeName(problem.problemType)} (Type ID: ${problem.problemType})
-Body: ${problem.body}
+Problem Type: ${getProblemTypeName(problem.problemType)}
+
+Problem Body:
+<problem>
+${problem.body}
+</problem>
+
 ${problem.options ? `Options:\n${problem.options.map((o) => `${o.key}: ${o.value}`).join("\n")}` : ""}
 ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
+
+Now please provide the answer in the required JSON format.
 `;
 
     log(`🧠 Sending problem ${problemId} to LLM...`);
@@ -89,10 +98,18 @@ ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
       }
 
       log(`✅ LLM answered: ${JSON.stringify(result)}`);
-      showToast("success", "大模型", `大模型返回的答案是：${result.join(", ")}`);
+      showToast(
+        "success",
+        "大模型",
+        `大模型返回的答案是：${result.join(", ")}`,
+      );
     } catch (err: any) {
       log(`❌ LLM Error: ${err.message}`);
-      showToast("danger", "大模型", `大模型调用出错，请手动答题，错误原因是 ${err.message}`);
+      showToast(
+        "danger",
+        "大模型",
+        `大模型调用出错，请手动答题，错误原因是 ${err.message}`,
+      );
       return;
     }
 
@@ -138,7 +155,11 @@ ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
         log(
           `⚠️ Answer for problem ${problemId} submitted but rejected by server. Response: ${JSON.stringify(data)}`,
         );
-        showToast("warning", "自动答题", `自动答题被拒绝接收，因为 ${data.msg}`);
+        showToast(
+          "warning",
+          "自动答题",
+          `自动答题被拒绝接收，因为 ${data.msg}`,
+        );
       }
       problem.hasAutoAnswered = true;
     } catch (err: any) {
@@ -153,9 +174,9 @@ ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
 function getProblemTypeName(type: number): string {
   switch (type) {
     case 1:
-      return "Single Choice";
+      return "Single choice";
     case 2:
-      return "Multiple Choice";
+      return "Multiple choice";
     case 4:
       return "Fill in the blank";
     default:

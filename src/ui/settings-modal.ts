@@ -310,9 +310,9 @@ class SettingsModal {
         } as any);
 
         const reply = completion.choices[0]?.message?.content;
-        alert(`测试完成。模型回复:\n${reply}`);
+        alert(`测试完成。大模型的回复是：\n${reply}`);
       } catch (e: any) {
-        alert(`测试失败:\n${e.message}`);
+        alert(`测试失败，原因：\n${e.message}`);
       } finally {
         const btn = $("#yuketang-js-llm-test-btn");
         btn.prop("disabled", false);
