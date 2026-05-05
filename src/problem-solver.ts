@@ -1,6 +1,6 @@
 import { config } from "./config.js";
 import { log } from "./utils/log.js";
-import { showBanner } from "./ui/banner.js";
+import { showToast } from "./ui/banner.js";
 import OpenAI from "openai";
 
 export interface ExtractedProblem {
@@ -84,18 +84,15 @@ ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
         result = JSON.parse(match[0]);
       } else {
         log(`⚠️ Could not parse JSON from LLM: ${reply}`);
-        showBanner(`大模型返回的结果无法解析，请手动答题`, "danger");
+        showToast("danger", "大模型", "大模型返回的结果无法解析，请手动答题");
         return;
       }
 
       log(`✅ LLM answered: ${JSON.stringify(result)}`);
-      showBanner(`大模型返回的答案是：${result.join(", ")}`, "success");
+      showToast("success", "大模型", `大模型返回的答案是：${result.join(", ")}`);
     } catch (err: any) {
       log(`❌ LLM Error: ${err.message}`);
-      showBanner(
-        `大模型调用出错，请手动答题，错误原因是 ${err.message}`,
-        "danger",
-      );
+      showToast("danger", "大模型", `大模型调用出错，请手动答题，错误原因是 ${err.message}`);
       return;
     }
 
@@ -136,19 +133,19 @@ ${problem.blanks ? `Blanks: ${problem.blanks.length} blanks to fill.` : ""}
       const data = await response.json();
       if (data.code === 0) {
         log(`✅ Answer for problem ${problemId} accepted by server.`);
-        showBanner(`自动答题发送成功`, "success");
+        showToast("success", "自动答题", "自动答题发送成功");
       } else {
         log(
           `⚠️ Answer for problem ${problemId} submitted but rejected by server. Response: ${JSON.stringify(data)}`,
         );
-        showBanner(`自动答题被拒绝接收，因为 ${data.msg}`, "warning");
+        showToast("warning", "自动答题", `自动答题被拒绝接收，因为 ${data.msg}`);
       }
       problem.hasAutoAnswered = true;
     } catch (err: any) {
       log(
         `❌ Failed to submit answer for problem ${problemId}: ${err.message}`,
       );
-      showBanner(`自动答题发送失败，因为 ${err.message}`, "danger");
+      showToast("danger", "自动答题", `自动答题发送失败，因为 ${err.message}`);
     }
   }
 }

@@ -11,7 +11,7 @@ import { audioController } from "./utils/audio-controller.js";
 import { XHRSpy } from "./utils/xhr-spy.js";
 import { LessonHeaderUI } from "./ui/header.js";
 import { GeneralHeaderUI } from "./ui/general-header.js";
-import { showBanner } from "./ui/banner.js";
+import { showToast } from "./ui/banner.js";
 import { problemSolver } from "./problem-solver.js";
 import { config } from "./config.js";
 
@@ -38,9 +38,10 @@ import { config } from "./config.js";
         }
       }
       log(`📄 Extracted ${count} problems from presentation fetch`);
-      showBanner(
-        `当前课堂总计的题目数量是 ${problemSolver.getProblemCount()} 道`,
+      showToast(
         "info",
+        "题目统计",
+        `当前课堂总计的题目数量是 ${problemSolver.getProblemCount()} 道`,
       );
     }
   });
@@ -64,9 +65,9 @@ import { config } from "./config.js";
       log(`🕒 Will run auto answer for ${problemId} in ${delayMs}ms`);
 
       if (delayMs > 0) {
-        showBanner(`将在 ${delayMs / 1000} 秒后准备自动答题`, "info");
+        showToast("info", "自动答题", `将在 ${delayMs / 1000} 秒后准备自动答题`);
       } else {
-        showBanner("将立即开始准备自动答题", "info");
+        showToast("info", "自动答题", "将立即开始准备自动答题");
       }
 
       setTimeout(() => {
