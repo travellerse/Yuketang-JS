@@ -1,4 +1,9 @@
-import { R_HELLO, R_UNLOCK_PROBLEM, R_EXTEND_TIME } from "./enum.js";
+import {
+  R_HELLO,
+  R_UNLOCK_PROBLEM,
+  R_EXTEND_TIME,
+  R_CALL_PAUSED,
+} from "./enum.js";
 import { log } from "./utils/log.js";
 import { notify } from "./utils/notify.js";
 import { wsMitm } from "./utils/ws-mitm.js";
@@ -85,9 +90,11 @@ import { config } from "./config.js";
       };
       if (json && json.op) {
         headerUI.setActive();
+        const elConfig = config.getEventListenersConfig();
+
         if (json.op === R_HELLO) {
           log("✅ WebSocket MITM is functioning correctly");
-        } else if (json.op === R_UNLOCK_PROBLEM) {
+        } else if (json.op === R_UNLOCK_PROBLEM && elConfig.unlockProblem) {
           const limit = json.problem ? json.problem.limit || "N/A" : "N/A";
           const problemId = json.problem ? json.problem.prob : undefined;
 
@@ -101,7 +108,7 @@ import { config } from "./config.js";
           if (problemId) {
             scheduleAutoAnswer(problemId, limit);
           }
-        } else if (json.op === R_EXTEND_TIME) {
+        } else if (json.op === R_EXTEND_TIME && elConfig.extendTime) {
           const extend = json.problem ? json.problem.extend || "N/A" : "N/A";
           const problemId = json.problem ? json.problem.prob : undefined;
 
@@ -115,6 +122,17 @@ import { config } from "./config.js";
           if (problemId) {
             scheduleAutoAnswer(problemId, extend);
           }
+        } else if (json.op === R_CALL_PAUSED && elConfig.randomPick) {
+          const name = (json as any).name || "未知姓名";
+          const sid = (json as any).sid || "";
+
+          notify(
+            "🎯 随机点名",
+            `【👉点我消除通知】随机点名选中：${name} ${sid}（Yuketang-JS）`,
+          );
+          audioController.play();
+
+          log(`🎯 Random pick: ${name} (${sid})`);
         }
       }
     } catch (error) {

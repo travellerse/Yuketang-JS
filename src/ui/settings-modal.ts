@@ -101,30 +101,51 @@ class SettingsModal {
             <div class="modal-body">
               <ul class="nav nav-tabs" id="yuketang-js-settings-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="yuketang-js-classroom-alert-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom-alert" type="button" role="tab" aria-controls="yuketang-js-classroom-alert" aria-selected="true">
-                    通知音频设置
+                  <button class="nav-link active" id="yuketang-js-classroom-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom" type="button" role="tab" aria-controls="yuketang-js-classroom" aria-selected="true">
+                    课堂
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
                   <button class="nav-link" id="yuketang-js-llm-settings-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-llm-settings" type="button" role="tab" aria-controls="yuketang-js-llm-settings" aria-selected="false">
-                    大模型设置
+                    大模型
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="yuketang-js-auto-answer-settings-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-auto-answer-settings" type="button" role="tab" aria-controls="yuketang-js-auto-answer-settings" aria-selected="false">
-                    答题设置
+                  <button class="nav-link" id="yuketang-js-audio-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-audio" type="button" role="tab" aria-controls="yuketang-js-audio" aria-selected="false">
+                    通知音频
                   </button>
                 </li>
               </ul>
               <div class="tab-content" id="yuketang-js-settings-tabs-content">
-                <div class="tab-pane fade show active" id="yuketang-js-classroom-alert" role="tabpanel" aria-labelledby="yuketang-js-classroom-alert-tab">
+                <div class="tab-pane fade show active" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
                   <div class="mt-3">
-                    <div class="d-flex gap-2 mb-3">
-                      <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-warning">测试音频播放</button>
-                      <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-warning">停止所有音频</button>
+                    <h5>事件监听</h5>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
+                      <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
                     </div>
-                    <h5>选择音频</h5>
-                    <div id="yuketang-js-audio-options"></div>
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-extend">
+                      <label class="form-check-label" for="yuketang-js-el-extend">延时题目</label>
+                    </div>
+                    <div class="form-check mb-4">
+                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-random">
+                      <label class="form-check-label" for="yuketang-js-el-random">随机点名</label>
+                    </div>
+
+                    <h5>自动答题</h5>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
+                      <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-aa-time-left" class="form-label">限时题目在截止前多少秒启动自动答题</label>
+                      <input type="number" class="form-control" id="yuketang-js-aa-time-left" value="30">
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-aa-time-after" class="form-label">不限时题目在收到题目后多少秒启动自动答题</label>
+                      <input type="number" class="form-control" id="yuketang-js-aa-time-after" value="15">
+                    </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-llm-settings" role="tabpanel" aria-labelledby="yuketang-js-llm-settings-tab">
@@ -155,20 +176,14 @@ class SettingsModal {
                     </div>
                   </div>
                 </div>
-                <div class="tab-pane fade" id="yuketang-js-auto-answer-settings" role="tabpanel" aria-labelledby="yuketang-js-auto-answer-settings-tab">
+                <div class="tab-pane fade" id="yuketang-js-audio" role="tabpanel" aria-labelledby="yuketang-js-audio-tab">
                   <div class="mt-3">
-                    <div class="form-check form-switch mb-3">
-                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
-                      <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                    <div class="d-flex gap-2 mb-3">
+                      <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-warning">测试音频播放</button>
+                      <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-warning">停止所有音频</button>
                     </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-left" class="form-label">限时题目在截止前多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-left" value="30">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-after" class="form-label">不现时题目在收到题目后多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-after" value="15">
-                    </div>
+                    <h5>选择音频</h5>
+                    <div id="yuketang-js-audio-options"></div>
                   </div>
                 </div>
               </div>
@@ -181,9 +196,33 @@ class SettingsModal {
     $("body").append(modalHtml);
     this.$modal = $("#yuketang-js-settings-modal");
 
-    this._populateAudioOptions();
-    this._populateLlmOptions();
+    this._populateEventListenersOptions();
     this._populateAutoAnswerOptions();
+    this._populateLlmOptions();
+    this._populateAudioOptions();
+  }
+
+  private _populateEventListenersOptions(): void {
+    const elConfig = config.getEventListenersConfig();
+    const $unlock = $("#yuketang-js-el-unlock");
+    const $extend = $("#yuketang-js-el-extend");
+    const $random = $("#yuketang-js-el-random");
+
+    $unlock.prop("checked", elConfig.unlockProblem);
+    $extend.prop("checked", elConfig.extendTime);
+    $random.prop("checked", elConfig.randomPick);
+
+    const updateConfig = () => {
+      config.setEventListenersConfig({
+        unlockProblem: Boolean($unlock.prop("checked")),
+        extendTime: Boolean($extend.prop("checked")),
+        randomPick: Boolean($random.prop("checked")),
+      });
+    };
+
+    $unlock.on("change", updateConfig);
+    $extend.on("change", updateConfig);
+    $random.on("change", updateConfig);
   }
 
   private _populateAutoAnswerOptions(): void {

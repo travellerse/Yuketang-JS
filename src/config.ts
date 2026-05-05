@@ -20,10 +20,17 @@ interface AutoAnswerConfig {
   timeAfterSend: number;
 }
 
+interface EventListenersConfig {
+  unlockProblem: boolean;
+  extendTime: boolean;
+  randomPick: boolean;
+}
+
 interface Config {
   audio: AudioConfig;
   llm: LlmConfig;
   autoAnswer: AutoAnswerConfig;
+  eventListeners: EventListenersConfig;
   hash: string;
 }
 
@@ -41,6 +48,11 @@ const DEFAULT_CONFIG: Config = {
     enabled: false,
     timeLeftThreshold: 30,
     timeAfterSend: 15,
+  },
+  eventListeners: {
+    unlockProblem: true,
+    extendTime: true,
+    randomPick: true,
   },
   hash: "",
 };
@@ -60,7 +72,9 @@ class ConfigManager {
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<Config>;
         log(`📋 Config loaded from storage`);
-        return this._mergeWithDefaults(parsed);
+        const merged = this._mergeWithDefaults(parsed);
+        merged.hash = this._computeHash(this._getContentFrom(merged));
+        return merged;
       }
     } catch (err) {
       const error = err as Error;
@@ -92,6 +106,17 @@ class ConfigManager {
           loaded.autoAnswer?.timeAfterSend ??
           DEFAULT_CONFIG.autoAnswer.timeAfterSend,
       },
+      eventListeners: {
+        unlockProblem:
+          loaded.eventListeners?.unlockProblem ??
+          DEFAULT_CONFIG.eventListeners.unlockProblem,
+        extendTime:
+          loaded.eventListeners?.extendTime ??
+          DEFAULT_CONFIG.eventListeners.extendTime,
+        randomPick:
+          loaded.eventListeners?.randomPick ??
+          DEFAULT_CONFIG.eventListeners.randomPick,
+      },
       hash: loaded.hash ?? "",
     };
   }
@@ -110,10 +135,15 @@ class ConfigManager {
   }
 
   private _getContent(): Omit<Config, "hash"> {
+    return this._getContentFrom(this.config);
+  }
+
+  private _getContentFrom(cfg: Config): Omit<Config, "hash"> {
     return {
-      audio: this.config.audio,
-      llm: this.config.llm,
-      autoAnswer: this.config.autoAnswer,
+      audio: cfg.audio,
+      llm: cfg.llm,
+      autoAnswer: cfg.autoAnswer,
+      eventListeners: cfg.eventListeners,
     };
   }
 
@@ -140,8 +170,10 @@ class ConfigManager {
       if (!stored) return false;
       const parsed = JSON.parse(stored) as Partial<Config>;
       if (!parsed.hash) return false;
+      const merged = this._mergeWithDefaults(parsed);
+      const storedHash = this._computeHash(this._getContentFrom(merged));
       const currentHash = this._computeHash(this._getContent());
-      return parsed.hash !== currentHash;
+      return storedHash !== currentHash;
     } catch {
       return false;
     }
@@ -227,6 +259,22 @@ class ConfigManager {
 
   setAutoAnswerConfig(newConfig: Partial<AutoAnswerConfig>): boolean {
     this.config.autoAnswer = { ...this.config.autoAnswer, ...newConfig };
+    return this._saveConfig();
+  }
+
+  getEventListenersConfig(): EventListenersConfig {
+    return JSON.parse(
+      JSON.stringify(this.config.eventListeners),
+    ) as EventListenersConfig;
+  }
+
+  setEventListenersConfig(
+    newConfig: Partial<EventListenersConfig>,
+  ): boolean {
+    this.config.eventListeners = {
+      ...this.config.eventListeners,
+      ...newConfig,
+    };
     return this._saveConfig();
   }
 }
