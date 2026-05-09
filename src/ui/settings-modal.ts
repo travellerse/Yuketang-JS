@@ -156,7 +156,10 @@ class SettingsModal {
                     </div>
                     <div class="mb-3">
                       <label for="yuketang-js-llm-apikey" class="form-label">API Key</label>
-                      <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
+                      <div class="input-group">
+                        <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
+                        <button class="btn" type="button" id="yuketang-js-llm-apikey-toggle">显示/隐藏</button>
+                      </div>
                     </div>
                     <div class="mb-3">
                       <label for="yuketang-js-llm-model" class="form-label">模型名称</label>
@@ -273,6 +276,11 @@ class SettingsModal {
     $apiKey.on("change", updateConfig);
     $model.on("change", updateConfig);
     $reasoning.on("change", updateConfig);
+
+    $("#yuketang-js-llm-apikey-toggle").on("click", () => {
+      const type = $apiKey.attr("type") === "password" ? "text" : "password";
+      $apiKey.attr("type", type);
+    });
 
     $("#yuketang-js-llm-test-btn").on("click", async () => {
       const baseUrl = $baseUrl.val() as string;
