@@ -177,6 +177,12 @@ class SettingsModal {
                     <div class="mb-3">
                       <button id="yuketang-js-llm-test-btn" class="btn btn-primary">测试大模型功能</button>
                     </div>
+                    <div id="yuketang-js-llm-test-result" class="d-none">
+                      <div id="yuketang-js-llm-test-alert" class="alert mb-0" role="alert">
+                        <strong id="yuketang-js-llm-test-status"></strong>
+                        <pre id="yuketang-js-llm-test-detail" class="mb-0 mt-1" style="white-space: pre-wrap;"></pre>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-audio" role="tabpanel" aria-labelledby="yuketang-js-audio-tab">
@@ -282,15 +288,34 @@ class SettingsModal {
       $apiKey.attr("type", type);
     });
 
+    const showTestResult = (
+      level: "success" | "danger" | "warning",
+      status: string,
+      detail: string,
+    ) => {
+      const $result = $("#yuketang-js-llm-test-result");
+      const $alert = $("#yuketang-js-llm-test-alert");
+      const $status = $("#yuketang-js-llm-test-status");
+      const $detail = $("#yuketang-js-llm-test-detail");
+
+      $alert.removeClass("alert-success alert-danger alert-warning");
+      $alert.addClass(`alert-${level}`);
+      $status.text(status);
+      $detail.text(detail);
+      $result.removeClass("d-none");
+    };
+
     $("#yuketang-js-llm-test-btn").on("click", async () => {
       const baseUrl = $baseUrl.val() as string;
       const apiKey = $apiKey.val() as string;
       const model = $model.val() as string;
       const reasoningEffort = $reasoning.val() as string;
 
-      if (!baseUrl || !apiKey || !model) {
-        alert(
-          "请完整填写大模型配置(API Base URL、API Key、模型名称均不可以为空)！",
+      if (!config.isLlmConfigAvailable()) {
+        showTestResult(
+          "warning",
+          "配置不完整",
+          "API Base URL 需以 http(s):// 开头，API Key 长度至少为 4，模型名称不可为空。",
         );
         return;
       }
@@ -298,14 +323,15 @@ class SettingsModal {
       const openai = new OpenAI({
         baseURL: baseUrl,
         apiKey: apiKey,
-        dangerouslyAllowBrowser: true, // We are in a browser extension context
+        dangerouslyAllowBrowser: true,
       });
 
-      try {
-        const btn = $("#yuketang-js-llm-test-btn");
-        btn.prop("disabled", true);
-        btn.text("测试中...");
+      const btn = $("#yuketang-js-llm-test-btn");
+      btn.prop("disabled", true);
+      btn.text("测试中...");
+      $("#yuketang-js-llm-test-result").addClass("d-none");
 
+      try {
         const completion = await openai.chat.completions.create({
           messages: [
             { role: "system", content: "You are a helpful assistant." },
@@ -317,12 +343,11 @@ class SettingsModal {
           stream: false,
         } as any);
 
-        const reply = completion.choices[0]?.message?.content;
-        alert(`测试完成。大模型的回复是：\n${reply}`);
+        const reply = completion.choices[0]?.message?.content || "(空回复)";
+        showTestResult("success", "测试通过", reply);
       } catch (e: any) {
-        alert(`测试失败，原因：\n${e.message}`);
+        showTestResult("danger", "测试失败", e.message);
       } finally {
-        const btn = $("#yuketang-js-llm-test-btn");
         btn.prop("disabled", false);
         btn.text("测试大模型功能");
       }

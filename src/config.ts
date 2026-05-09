@@ -234,12 +234,15 @@ class ConfigManager {
     return this._saveConfig();
   }
 
-  /**
-   * Gets entire audio configuration
-   * @returns {{ selected: string }}
-   */
   getAudioConfig(): AudioConfig {
     return JSON.parse(JSON.stringify(this.config.audio)) as AudioConfig;
+  }
+
+  isLlmConfigAvailable(): boolean {
+    const { baseUrl, apiKey, model } = this.config.llm;
+    return (
+      /^https?:\/\/.+/.test(baseUrl) && apiKey.length >= 4 && model.length > 0
+    );
   }
 
   getLlmConfig(): LlmConfig {
@@ -268,9 +271,7 @@ class ConfigManager {
     ) as EventListenersConfig;
   }
 
-  setEventListenersConfig(
-    newConfig: Partial<EventListenersConfig>,
-  ): boolean {
+  setEventListenersConfig(newConfig: Partial<EventListenersConfig>): boolean {
     this.config.eventListeners = {
       ...this.config.eventListeners,
       ...newConfig,

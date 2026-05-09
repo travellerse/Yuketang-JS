@@ -38,11 +38,12 @@ export class ProblemSolver {
       return;
     }
 
-    const llmConfig = config.getLlmConfig();
-    if (!llmConfig.baseUrl || !llmConfig.apiKey || !llmConfig.model) {
-      log(`❌ LLM configuration is missing. Please set it in the settings.`);
+    if (!config.isLlmConfigAvailable()) {
+      log(`❌ LLM configuration is missing or invalid. Please check settings.`);
       return;
     }
+
+    const llmConfig = config.getLlmConfig();
 
     const openai = new OpenAI({
       baseURL: llmConfig.baseUrl,
