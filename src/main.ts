@@ -38,10 +38,16 @@ import { config } from "./config.js";
         }
       }
       log(`📄 Extracted ${count} problems from presentation fetch`);
+      const aaConfig = config.getAutoAnswerConfig();
+      const aaStatus = !aaConfig.enabled
+        ? "自动答题已关闭"
+        : config.isLlmConfigAvailable()
+          ? "自动答题已开启"
+          : "自动答题已开启，但大模型配置不正确";
       showToast(
         "info",
         "题目统计",
-        `当前课堂总计的题目数量是 ${problemSolver.getProblemCount()} 道`,
+        `当前课堂总计的题目数量是 ${problemSolver.getProblemCount()} 道<br>${aaStatus}`,
       );
     }
   });
@@ -65,7 +71,11 @@ import { config } from "./config.js";
       log(`🕒 Will run auto answer for ${problemId} in ${delayMs}ms`);
 
       if (delayMs > 0) {
-        showToast("info", "自动答题", `将在 ${delayMs / 1000} 秒后准备自动答题`);
+        showToast(
+          "info",
+          "自动答题",
+          `将在 ${delayMs / 1000} 秒后准备自动答题`,
+        );
       } else {
         showToast("info", "自动答题", "将立即开始准备自动答题");
       }
