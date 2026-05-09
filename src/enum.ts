@@ -9,6 +9,11 @@ export const S_HELLO = "hello";
 export const R_HELLO = "hello";
 
 /**
+ * `{"op":"lessonfinished","lessonid":"123456789","event":{"type":"event","title":"下课啦！","code":"LESSON_FINISH","show":true,"dt":1777777777777}}`
+ */
+export const R_LESSON_FINISHED = "lessonfinished";
+
+/**
  * `{"op":"presentationcreated","lessonid":"123456789","presentation":"123456789"}`
  */
 export const R_PRESENTATION_CREATED = "presentationcreated";
@@ -27,6 +32,7 @@ export const R_SHOW_PRESENTATION = "showpresentation";
  * `{"op":"showfinished","lessonid":"123456789","presentation":"123456789","event":{"type":"event","title":"幻灯片 幻灯片名 结束放映","code":"SHOW_FINISH","replace":["幻灯片名"],"show":true,"dt":1777777777780}}`
  */
 export const S_SHOW_FINISHED = "showfinished";
+
 /**
  * `{"op":"fetchtimeline","lessonid":"123456789","msgid":1}`
  */

@@ -120,6 +120,7 @@ class SettingsModal {
                 <div class="tab-pane fade show active" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
                   <div class="mt-3">
                     <h5>事件监听</h5>
+                    <p class="text-muted small mb-2">选择需要发送桌面通知的课堂事件</p>
                     <div class="form-check mb-2">
                       <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
                       <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
