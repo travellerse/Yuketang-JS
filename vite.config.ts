@@ -8,7 +8,7 @@ export default defineConfig({
       entry: "src/main.js",
       userscript: {
         name: "Yuketang-JS",
-        version: "0.4.0",
+        version: "0.5.0",
         description: "A Browser Script to Enhance Yuketang Experience",
         author: "Harry Huang",
         license: "MIT",
