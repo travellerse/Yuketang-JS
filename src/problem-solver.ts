@@ -128,7 +128,9 @@ Now please provide the answer in the required JSON format.
       };
 
       // Check global authorization
-      const auth = (window as any).Authorization;
+      const realWindow =
+        typeof unsafeWindow !== "undefined" ? unsafeWindow : window;
+      const auth = (realWindow as any).Authorization;
       if (auth) {
         headers["Authorization"] = `Bearer ${auth}`;
       }
@@ -144,7 +146,7 @@ Now please provide the answer in the required JSON format.
 
       const setAuth = response.headers.get("Set-Auth");
       if (setAuth) {
-        (window as any).Authorization = setAuth;
+        (realWindow as any).Authorization = setAuth;
         log(`🔄 Updated window.Authorization from response`);
       }
 

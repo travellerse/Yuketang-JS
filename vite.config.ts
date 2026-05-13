@@ -13,7 +13,7 @@ export default defineConfig({
         author: "Harry Huang",
         license: "MIT",
         match: ["https://*.yuketang.cn/*"],
-        grant: ["GM_notification"],
+        grant: ["GM_notification", "unsafeWindow"],
         source: "https://github.com/isHarryh/Yuketang-JS",
         namespace: "https://www.yuketang.cn/",
         "run-at": "document-start",
