@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yuketang-JS
 // @namespace    https://www.yuketang.cn/
-// @version      0.5.0
+// @version      0.5.1
 // @author       Harry Huang
 // @description  A Browser Script to Enhance Yuketang Experience
 // @license      MIT
@@ -18108,7 +18108,8 @@ Now please provide the answer in the required JSON format.
         const headers = {
           "Content-Type": "application/json"
         };
-        const auth = window.Authorization;
+        const realWindow = typeof unsafeWindow !== "undefined" ? unsafeWindow : window;
+        const auth = realWindow.Authorization;
         if (auth) {
           headers["Authorization"] = `Bearer ${auth}`;
         }
@@ -18122,7 +18123,7 @@ Now please provide the answer in the required JSON format.
         );
         const setAuth = response.headers.get("Set-Auth");
         if (setAuth) {
-          window.Authorization = setAuth;
+          realWindow.Authorization = setAuth;
           log(`🔄 Updated window.Authorization from response`);
         }
         const data = await response.json();
