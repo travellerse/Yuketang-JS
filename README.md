@@ -14,6 +14,12 @@ A Browser Script to Enhance Yuketang Experience
 
 更新日志请查阅 [CHANGELOG](CHANGELOG.md)。
 
+## 使用方法 <sub>Usage</sub>
+
+1. 在浏览器中安装 Tampermonkey 扩展程序；
+2. 在浏览器的扩展程序设置中打开“开发者模式”；
+3. 在 Tampermonkey 中导入脚本文件 [dist/yuketang-js.user.js](dist/yuketang-js.user.js)。
+
 ## 开发 <sub>Development</sub>
 
 ### 开发（热重载）
