@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yuketang-JS
 // @namespace    https://www.yuketang.cn/
-// @version      0.5.1
+// @version      0.6.0
 // @author       Harry Huang
 // @description  A Browser Script to Enhance Yuketang Experience
 // @license      MIT
@@ -11379,6 +11379,66 @@ static jQueryInterface(config2) {
   }
   enableDismissTrigger(Toast);
   defineJQueryPlugin(Toast);
+  const FINGERPRINT_OPTIONS = [
+    { value: "1", label: "非 APP 扫二维码(1)" },
+    { value: "21", label: "APP 扫二维码(21)" },
+    { value: "2", label: "课堂暗号(2)" },
+    { value: "5", label: "网页端“正在上课”提示(5)" },
+    { value: "9", label: "小程序分享(9)" },
+    { value: "30", label: "观看直播回放(30)" },
+    { value: "25", label: "上课提醒(25)" },
+    { value: "80", label: "腾讯会议(80)" },
+    { value: "81", label: "答题器(81)" },
+    { value: "82", label: "点阵笔(82)" },
+    { value: "83", label: "人脸识别(83)" },
+    { value: "26", label: "分享链接(26)" },
+    { value: "0", label: "其他(0)" }
+  ];
+  const LEVEL_BADGE_CLASS = {
+    info: "bg-info",
+    success: "bg-success",
+    danger: "bg-danger",
+    warning: "bg-warning text-dark"
+  };
+  function formatTime() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return `${hh}:${mm}:${ss}`;
+  }
+  function showToast(level, title, text, expire_ms = 0) {
+    const containerId = "yuketang-js-toast-container";
+    let $container = $(`#${containerId}`);
+    if ($container.length === 0) {
+      $container = $(
+        `<div id="${containerId}" class="toast-container bottom-0 start-0 p-3" style="z-index: 9999;"></div>`
+      );
+      $("body").append($container);
+    }
+    const badgeClass = LEVEL_BADGE_CLASS[level] ?? "bg-secondary";
+    const html = `
+    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
+      <div class="toast-header">
+        <span class="badge ${badgeClass} rounded-pill me-2">&nbsp;</span>
+        <strong class="me-auto">[Yuketang-JS] ${title}</strong>
+        <small class="text-body-secondary">${formatTime()}</small>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">${text}</div>
+    </div>
+  `;
+    const $toast = $(html);
+    $container.append($toast);
+    const toastInstance = new Toast($toast[0], {
+      autohide: expire_ms > 0,
+      delay: expire_ms
+    });
+    toastInstance.show();
+    $toast.on("hidden.bs.toast", () => {
+      $toast.remove();
+    });
+  }
   function __classPrivateFieldSet(receiver, state, value, kind, f) {
     if (typeof state === "function" ? receiver !== state || true : !state.has(receiver))
       throw new TypeError("Cannot write private member to an object whose class did not declare it");
@@ -17074,7 +17134,7 @@ isReadableStream
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">配置已过期</h5>
+            <h5 class="modal-title">Yuketang-JS 配置已过期</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -17082,7 +17142,7 @@ isReadableStream
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="yuketang-js-stale-ignore-btn">忽略</button>
-            <button type="button" class="btn btn-primary" id="yuketang-js-stale-refresh-btn">刷新</button>
+            <button type="button" class="btn btn-primary" id="yuketang-js-stale-refresh-btn">立即刷新</button>
           </div>
         </div>
       </div>
@@ -17141,7 +17201,12 @@ isReadableStream
             <div class="modal-body">
               <ul class="nav nav-tabs" id="yuketang-js-settings-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="yuketang-js-classroom-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom" type="button" role="tab" aria-controls="yuketang-js-classroom" aria-selected="true">
+                  <button class="nav-link active" id="yuketang-js-checkin-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-checkin" type="button" role="tab" aria-controls="yuketang-js-checkin" aria-selected="true">
+                    签到
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="yuketang-js-classroom-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom" type="button" role="tab" aria-controls="yuketang-js-classroom" aria-selected="false">
                     课堂
                   </button>
                 </li>
@@ -17157,66 +17222,119 @@ isReadableStream
                 </li>
               </ul>
               <div class="tab-content" id="yuketang-js-settings-tabs-content">
-                <div class="tab-pane fade show active" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
+                <div class="tab-pane fade show active" id="yuketang-js-checkin" role="tabpanel" aria-labelledby="yuketang-js-checkin-tab">
                   <div class="mt-3">
-                    <h5>事件监听</h5>
-                    <p class="text-muted small mb-2">选择需要发送桌面通知的课堂事件</p>
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
-                      <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
-                    </div>
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-extend">
-                      <label class="form-check-label" for="yuketang-js-el-extend">延时题目</label>
-                    </div>
-                    <div class="form-check mb-4">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-random">
-                      <label class="form-check-label" for="yuketang-js-el-random">随机点名</label>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">签到指纹设置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <label for="yuketang-js-checkin-fingerprint" class="form-label fw-medium mb-1">默认签到指纹</label>
+                      <select class="form-select form-select-sm" id="yuketang-js-checkin-fingerprint"></select>
                     </div>
 
-                    <h5>自动答题</h5>
-                    <div class="form-check form-switch mb-3">
-                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
-                      <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动签到设置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">您需要打开主页才能在有课堂上课时自动进行签到</div>
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
+                        <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-checkin-auto-delay" class="form-label fw-medium mb-1">签到前延迟秒数</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-checkin-auto-delay" value="15">
+                      </div>
                     </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-left" class="form-label">限时题目在截止前多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-left" value="30">
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">开启主页自动刷新可以在一定程度上阻止浏览器的睡眠策略</div>
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
+                        <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页自动刷新</label>
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-checkin-refresh-interval" class="form-label fw-medium mb-1">刷新间隔分钟数</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-checkin-refresh-interval" value="5">
+                      </div>
                     </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-after" class="form-label">不限时题目在收到题目后多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-after" value="15">
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">浏览器可能会阻止打开课堂页面，建议您点击下方按钮进行测试</div>
+                      <div class="d-flex gap-2">
+                        <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                        <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
+                      </div>
+                    </div>
+                    <div id="yuketang-js-checkin-reload-hint" class="rounded px-3 py-2 mb-3 d-none alert alert-warning mb-0 py-2 px-3" role="alert">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="small">当前所做的修改需要刷新页面才能生效</span>
+                        <button id="yuketang-js-checkin-reload-btn" class="btn btn-sm btn-warning">立即刷新</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
+                  <div class="mt-3">
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">事件监听</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">选择需要发送桌面通知的课堂事件</div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
+                        <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
+                      </div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-extend">
+                        <label class="form-check-label" for="yuketang-js-el-extend">延时题目</label>
+                      </div>
+                      <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-random">
+                        <label class="form-check-label" for="yuketang-js-el-random">随机点名</label>
+                      </div>
+                    </div>
+
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动答题</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
+                        <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-aa-time-left" class="form-label fw-medium mb-1">限时题目在截止前多少秒启动自动答题</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-aa-time-left" value="30">
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-aa-time-after" class="form-label fw-medium mb-1">不限时题目在收到题目后多少秒启动自动答题</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-aa-time-after" value="15">
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-llm-settings" role="tabpanel" aria-labelledby="yuketang-js-llm-settings-tab">
                   <div class="mt-3">
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-baseurl" class="form-label">API Base URL</label>
-                      <input type="text" class="form-control" id="yuketang-js-llm-baseurl" placeholder="https://...">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-apikey" class="form-label">API Key</label>
-                      <div class="input-group">
-                        <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
-                        <button class="btn" type="button" id="yuketang-js-llm-apikey-toggle">显示/隐藏</button>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">大模型配置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-baseurl" class="form-label fw-medium mb-1">API Base URL</label>
+                        <input type="text" class="form-control form-control-sm" id="yuketang-js-llm-baseurl" placeholder="https://...">
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-apikey" class="form-label fw-medium mb-1">API Key</label>
+                        <div class="input-group input-group-sm">
+                          <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
+                          <button class="btn btn-outline-secondary" type="button" id="yuketang-js-llm-apikey-toggle">显示/隐藏</button>
+                        </div>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-model" class="form-label fw-medium mb-1">模型名称</label>
+                        <input type="text" class="form-control form-control-sm" id="yuketang-js-llm-model">
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-llm-reasoning" class="form-label fw-medium mb-1">推理强度</label>
+                        <select class="form-select form-select-sm" id="yuketang-js-llm-reasoning">
+                          <option value="low">low</option>
+                          <option value="medium">medium</option>
+                          <option value="high">high</option>
+                          <option value="xhigh">xhigh</option>
+                        </select>
                       </div>
                     </div>
                     <div class="mb-3">
-                      <label for="yuketang-js-llm-model" class="form-label">模型名称</label>
-                      <input type="text" class="form-control" id="yuketang-js-llm-model">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-reasoning" class="form-label">推理强度</label>
-                      <select class="form-select" id="yuketang-js-llm-reasoning">
-                        <option value="low">low</option>
-                        <option value="medium">medium</option>
-                        <option value="high">high</option>
-                        <option value="xhigh">xhigh</option>
-                      </select>
-                    </div>
-                    <div class="mb-3">
-                      <button id="yuketang-js-llm-test-btn" class="btn btn-primary">测试大模型功能</button>
+                      <button id="yuketang-js-llm-test-btn" class="btn btn-sm btn-primary">测试大模型功能</button>
                     </div>
                     <div id="yuketang-js-llm-test-result" class="d-none">
                       <div id="yuketang-js-llm-test-alert" class="alert mb-0" role="alert">
@@ -17228,12 +17346,15 @@ isReadableStream
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-audio" role="tabpanel" aria-labelledby="yuketang-js-audio-tab">
                   <div class="mt-3">
-                    <div class="d-flex gap-2 mb-3">
-                      <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-warning">测试音频播放</button>
-                      <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-warning">停止所有音频</button>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">通知音频</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">选择收到课堂事件时播放的提示音</div>
+                      <div id="yuketang-js-audio-options"></div>
+                      <div class="d-flex gap-2 mt-2">
+                        <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-primary">测试音频播放</button>
+                        <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-outline-primary">停止所有音频</button>
+                      </div>
                     </div>
-                    <h5>选择音频</h5>
-                    <div id="yuketang-js-audio-options"></div>
                   </div>
                 </div>
               </div>
@@ -17248,6 +17369,7 @@ isReadableStream
       this._populateAutoAnswerOptions();
       this._populateLlmOptions();
       this._populateAudioOptions();
+      this._populateCheckinOptions();
     }
     _populateEventListenersOptions() {
       const elConfig = config.getEventListenersConfig();
@@ -17397,6 +17519,59 @@ isReadableStream
         $audioOptions.find("input[type='radio']").first().prop("checked", true);
       }
     }
+    _populateCheckinOptions() {
+      const checkinConfig = config.getCheckinConfig();
+      const $fingerprint = $("#yuketang-js-checkin-fingerprint");
+      const $autoEnabled = $("#yuketang-js-checkin-auto-enabled");
+      const $autoDelay = $("#yuketang-js-checkin-auto-delay");
+      const $autoRefresh = $("#yuketang-js-checkin-auto-refresh");
+      const $refreshInterval = $("#yuketang-js-checkin-refresh-interval");
+      FINGERPRINT_OPTIONS.forEach((opt) => {
+        $fingerprint.append(`<option value="${opt.value}">${opt.label}</option>`);
+      });
+      $fingerprint.val(checkinConfig.defaultFingerprint);
+      $autoEnabled.prop("checked", checkinConfig.autoCheckinEnabled);
+      $autoDelay.val(checkinConfig.autoCheckinDelay);
+      $autoRefresh.prop("checked", checkinConfig.autoRefreshEnabled);
+      $refreshInterval.val(checkinConfig.autoRefreshInterval);
+      const updateConfig = () => {
+        config.setCheckinConfig({
+          defaultFingerprint: $fingerprint.val(),
+          autoCheckinEnabled: Boolean($autoEnabled.prop("checked")),
+          autoCheckinDelay: parseInt($autoDelay.val(), 10) || 15,
+          autoRefreshEnabled: Boolean($autoRefresh.prop("checked")),
+          autoRefreshInterval: parseInt($refreshInterval.val(), 10) || 5
+        });
+      };
+      $fingerprint.on("change", updateConfig);
+      $autoEnabled.on("change", updateConfig);
+      $autoDelay.on("change", updateConfig);
+      $autoRefresh.on("change", updateConfig);
+      $refreshInterval.on("change", updateConfig);
+      const $reloadHint = $("#yuketang-js-checkin-reload-hint");
+      const showReloadHint = () => $reloadHint.removeClass("d-none");
+      $autoEnabled.on("change", showReloadHint);
+      $autoDelay.on("change", showReloadHint);
+      $autoRefresh.on("change", showReloadHint);
+      $refreshInterval.on("change", showReloadHint);
+      $("#yuketang-js-checkin-reload-btn").on("click", () => {
+        location.reload();
+      });
+      $("#yuketang-js-checkin-test-open").on("click", () => {
+        window.open("/lesson/fullscreen/v3", "_blank");
+        showToast(
+          "info",
+          "自动签到",
+          "已请求打开新页面用于测试，如果您没有看到有新页面打开，请检查浏览器的拦截提示；如果新页面已正常打开，则没有问题，您可将其关闭",
+          0
+        );
+      });
+      $("#yuketang-js-checkin-clear-cache").on("click", () => {
+        GM_setValue("yuketang-js-checked-lessons", []);
+        log("🗑️ Checked lessons cache cleared");
+        showToast("success", "自动签到", "已签到课程的缓存已清除");
+      });
+    }
   }
   const settingsModal = new SettingsModal();
   const CONFIG_KEY = "yuketang-js-config";
@@ -17419,6 +17594,13 @@ isReadableStream
       unlockProblem: true,
       extendTime: true,
       randomPick: true
+    },
+    checkin: {
+      defaultFingerprint: "1",
+      autoCheckinEnabled: false,
+      autoCheckinDelay: 15,
+      autoRefreshEnabled: false,
+      autoRefreshInterval: 5
     },
     hash: ""
   };
@@ -17467,6 +17649,13 @@ isReadableStream
           extendTime: loaded.eventListeners?.extendTime ?? DEFAULT_CONFIG.eventListeners.extendTime,
           randomPick: loaded.eventListeners?.randomPick ?? DEFAULT_CONFIG.eventListeners.randomPick
         },
+        checkin: {
+          defaultFingerprint: loaded.checkin?.defaultFingerprint ?? DEFAULT_CONFIG.checkin.defaultFingerprint,
+          autoCheckinEnabled: loaded.checkin?.autoCheckinEnabled ?? DEFAULT_CONFIG.checkin.autoCheckinEnabled,
+          autoCheckinDelay: loaded.checkin?.autoCheckinDelay ?? DEFAULT_CONFIG.checkin.autoCheckinDelay,
+          autoRefreshEnabled: loaded.checkin?.autoRefreshEnabled ?? DEFAULT_CONFIG.checkin.autoRefreshEnabled,
+          autoRefreshInterval: loaded.checkin?.autoRefreshInterval ?? DEFAULT_CONFIG.checkin.autoRefreshInterval
+        },
         hash: loaded.hash ?? ""
       };
     }
@@ -17489,7 +17678,8 @@ isReadableStream
         audio: cfg.audio,
         llm: cfg.llm,
         autoAnswer: cfg.autoAnswer,
-        eventListeners: cfg.eventListeners
+        eventListeners: cfg.eventListeners,
+        checkin: cfg.checkin
       };
     }
     _saveConfig() {
@@ -17580,6 +17770,13 @@ setSelectedAudio(presetId) {
         ...this.config.eventListeners,
         ...newConfig
       };
+      return this._saveConfig();
+    }
+    getCheckinConfig() {
+      return JSON.parse(JSON.stringify(this.config.checkin));
+    }
+    setCheckinConfig(newConfig) {
+      this.config.checkin = { ...this.config.checkin, ...newConfig };
       return this._saveConfig();
     }
   }
@@ -17699,7 +17896,6 @@ setActive() {
       }
       const $header = $(".lesson__header");
       if ($header.length === 0) {
-        log("❓ lesson__header not found on this page");
         return;
       }
       const $existing = $("#yuketang-js-ui-container");
@@ -17807,27 +18003,25 @@ setActive() {
       }
     };
   }
-  const FINGERPRINT_OPTIONS = [
-    { value: "1", label: "非 APP 扫二维码(1)" },
-    { value: "21", label: "APP 扫二维码(21)" },
-    { value: "2", label: "课堂暗号(2)" },
-    { value: "5", label: "网页端“正在上课”提示(5)" },
-    { value: "9", label: "小程序分享(9)" },
-    { value: "30", label: "观看直播回放(30)" },
-    { value: "25", label: "上课提醒(25)" },
-    { value: "80", label: "腾讯会议(80)" },
-    { value: "81", label: "答题器(81)" },
-    { value: "82", label: "点阵笔(82)" },
-    { value: "83", label: "人脸识别(83)" },
-    { value: "26", label: "分享链接(26)" },
-    { value: "0", label: "其他(0)" }
-  ];
+  const CHECKED_LESSONS_KEY = "yuketang-js-checked-lessons";
+  function getCheckedLessons() {
+    return GM_getValue(CHECKED_LESSONS_KEY, []);
+  }
+  function addCheckedLesson(lessonId) {
+    const lessons = getCheckedLessons();
+    if (!lessons.includes(lessonId)) {
+      lessons.push(lessonId);
+      GM_setValue(CHECKED_LESSONS_KEY, lessons);
+    }
+  }
   class GeneralHeaderUI {
     $settingsBtn;
     injected;
+    checkingLessons;
     constructor() {
       this.$settingsBtn = null;
       this.injected = false;
+      this.checkingLessons = [];
     }
     update() {
       this._ensureInjected();
@@ -17895,6 +18089,8 @@ setActive() {
           );
           return;
         }
+        const checkinConf2 = config.getCheckinConfig();
+        const checkedLessons = getCheckedLessons();
         for (const item of items) {
           const $row = $(`
           <div class="d-flex justify-content-between align-items-center rounded px-3 py-2"
@@ -17908,8 +18104,68 @@ setActive() {
           $btn.on("click", () => this._showEnterClassroomModal(item));
           $row.append($btn);
           $list.append($row);
+          if (checkinConf2.autoCheckinEnabled && !this.checkingLessons.includes(item.lessonId) && !checkedLessons.includes(item.lessonId)) {
+            const delaySec = checkinConf2.autoCheckinDelay;
+            const source = checkinConf2.defaultFingerprint;
+            this.checkingLessons.push(item.lessonId);
+            log(
+              `🔄 Auto check-in scheduled for ${item.lessonId} in ${delaySec}s`
+            );
+            showToast(
+              "info",
+              "自动签到",
+              `将在 ${delaySec} 秒后自动签到「${item.courseName}」`,
+              0
+            );
+            setTimeout(() => {
+              const url = `https://www.yuketang.cn/lesson/fullscreen/v3/${item.lessonId}?source=${source}`;
+              window.open(url, "_blank");
+              addCheckedLesson(item.lessonId);
+              log(`✅ Auto check-in executed for ${item.lessonId}`);
+              showToast(
+                "success",
+                "自动签到",
+                `已请求打开新页面用于进入「${item.courseName}」`,
+                0
+              );
+            }, delaySec * 1e3);
+          }
         }
       });
+      const checkinConf = config.getCheckinConfig();
+      if (checkinConf.autoCheckinEnabled) {
+        showToast(
+          "info",
+          "自动签到",
+          `已开启自动签到，将在检测到开课后 ${checkinConf.autoCheckinDelay} 秒自动进入课堂`,
+          0
+        );
+      } else {
+        showToast(
+          "info",
+          "自动签到",
+          `未开启自动签到，如需开启请调整脚本设置`,
+          0
+        );
+      }
+      if (checkinConf.autoRefreshEnabled && window.location.href.includes("index")) {
+        const intervalMin = checkinConf.autoRefreshInterval;
+        log(
+          `🔄 Homepage auto-refresh enabled, will reload in ${intervalMin} min`
+        );
+        showToast(
+          "info",
+          "自动签到",
+          `已开启主页自动刷新，当前页面将每隔 ${intervalMin} 分钟自动刷新`,
+          0
+        );
+        setTimeout(
+          () => {
+            location.reload();
+          },
+          intervalMin * 60 * 1e3
+        );
+      }
     }
     _showEnterClassroomModal(item) {
       const modalId = "yuketang-js-enter-classroom-modal";
@@ -17953,10 +18209,13 @@ setActive() {
       $("body").append(html);
       const $modal = $(`#${modalId}`);
       const modalInstance = new Modal($modal[0]);
+      const checkinConfig = config.getCheckinConfig();
+      $(`#yuketang-js-fingerprint-select`).val(checkinConfig.defaultFingerprint);
       $("#yuketang-js-enter-confirm-btn").on("click", () => {
         const source = $("#yuketang-js-fingerprint-select").val();
         const url = `https://www.yuketang.cn/lesson/fullscreen/v3/${item.lessonId}?source=${source}`;
         window.open(url, "_blank");
+        addCheckedLesson(item.lessonId);
         modalInstance.hide();
       });
       $modal.on("hidden.bs.modal", () => {
@@ -17964,51 +18223,6 @@ setActive() {
       });
       modalInstance.show();
     }
-  }
-  const LEVEL_BADGE_CLASS = {
-    info: "bg-info",
-    success: "bg-success",
-    danger: "bg-danger",
-    warning: "bg-warning text-dark"
-  };
-  function formatTime() {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    const ss = String(now.getSeconds()).padStart(2, "0");
-    return `${hh}:${mm}:${ss}`;
-  }
-  function showToast(level, title, text, expire_ms = 0) {
-    const containerId = "yuketang-js-toast-container";
-    let $container = $(`#${containerId}`);
-    if ($container.length === 0) {
-      $container = $(
-        `<div id="${containerId}" class="toast-container bottom-0 start-0 p-3" style="z-index: 9999;"></div>`
-      );
-      $("body").append($container);
-    }
-    const badgeClass = LEVEL_BADGE_CLASS[level] ?? "bg-secondary";
-    const html = `
-    <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false">
-      <div class="toast-header">
-        <span class="badge ${badgeClass} rounded-pill me-2">&nbsp;</span>
-        <strong class="me-auto">[Yuketang-JS] ${title}</strong>
-        <small class="text-body-secondary">${formatTime()}</small>
-        <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-      <div class="toast-body">${text}</div>
-    </div>
-  `;
-    const $toast = $(html);
-    $container.append($toast);
-    const toastInstance = new Toast($toast[0], {
-      autohide: expire_ms > 0,
-      delay: expire_ms
-    });
-    toastInstance.show();
-    $toast.on("hidden.bs.toast", () => {
-      $toast.remove();
-    });
   }
   class ProblemSolver {
     problemsDict;
