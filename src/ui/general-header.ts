@@ -163,6 +163,21 @@ export class GeneralHeaderUI {
 
     // Homepage auto-refresh
     const checkinConf = config.getCheckinConfig();
+    if (checkinConf.autoCheckinEnabled) {
+      showToast(
+        "info",
+        "自动签到",
+        `已开启自动签到，将在检测到开课后 ${checkinConf.autoCheckinDelay} 秒自动进入课堂`,
+        0,
+      );
+    } else {
+      showToast(
+        "info",
+        "自动签到",
+        `未开启自动签到，如需开启请调整脚本设置`,
+        0,
+      );
+    }
     if (
       checkinConf.autoRefreshEnabled &&
       window.location.href.includes("index")
@@ -173,8 +188,8 @@ export class GeneralHeaderUI {
       );
       showToast(
         "info",
-        "自动刷新",
-        `当前页面将在 ${intervalMin} 分钟后自动刷新`,
+        "自动签到",
+        `已开启主页自动刷新，当前页面将每隔 ${intervalMin} 分钟自动刷新`,
         0,
       );
       setTimeout(

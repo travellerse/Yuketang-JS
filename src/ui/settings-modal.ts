@@ -492,8 +492,8 @@ class SettingsModal {
       window.open("/lesson/fullscreen/v3", "_blank");
       showToast(
         "info",
-        "测试打开新页面",
-        "已请求打开新页面，如果您没有看到有新页面打开，请检查浏览器的拦截提示；如果新页面已正常打开，则没有问题，您可将其关闭",
+        "自动签到",
+        "已请求打开新页面用于测试，如果您没有看到有新页面打开，请检查浏览器的拦截提示；如果新页面已正常打开，则没有问题，您可将其关闭",
         0,
       );
     });
@@ -501,7 +501,7 @@ class SettingsModal {
     $("#yuketang-js-checkin-clear-cache").on("click", () => {
       GM_setValue("yuketang-js-checked-lessons", []);
       log("🗑️ Checked lessons cache cleared");
-      showToast("success", "缓存已清除", "已签到课程缓存已清除");
+      showToast("success", "自动签到", "已签到课程的缓存已清除");
     });
   }
 }
