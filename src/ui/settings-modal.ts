@@ -17,7 +17,7 @@ export function showStaleConfigWarning(): void {
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">配置已过期</h5>
+            <h5 class="modal-title">Yuketang-JS 配置已过期</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -25,7 +25,7 @@ export function showStaleConfigWarning(): void {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="yuketang-js-stale-ignore-btn">忽略</button>
-            <button type="button" class="btn btn-primary" id="yuketang-js-stale-refresh-btn">刷新</button>
+            <button type="button" class="btn btn-primary" id="yuketang-js-stale-refresh-btn">立即刷新</button>
           </div>
         </div>
       </div>
@@ -126,100 +126,111 @@ class SettingsModal {
               <div class="tab-content" id="yuketang-js-settings-tabs-content">
                 <div class="tab-pane fade show active" id="yuketang-js-checkin" role="tabpanel" aria-labelledby="yuketang-js-checkin-tab">
                   <div class="mt-3">
-                    <h5>签到指纹设置</h5>
-                    <p class="text-muted small mb-2">选择签到时使用的默认指纹</p>
-                    <div class="mb-4">
-                      <label for="yuketang-js-checkin-fingerprint" class="form-label">默认签到指纹</label>
-                      <select class="form-select" id="yuketang-js-checkin-fingerprint"></select>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">签到指纹设置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <label for="yuketang-js-checkin-fingerprint" class="form-label fw-medium mb-1">默认签到指纹</label>
+                      <select class="form-select form-select-sm" id="yuketang-js-checkin-fingerprint"></select>
                     </div>
 
-                    <h5>自动签到设置</h5>
-                    <p class="text-muted small mb-2">需要打开主页才能在有课堂上课时自动进行签到</p>
-                    <div class="form-check form-switch mb-3">
-                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
-                      <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动签到设置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">您需要打开主页才能在有课堂上课时自动进行签到</div>
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
+                        <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-checkin-auto-delay" class="form-label fw-medium mb-1">签到前延迟秒数</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-checkin-auto-delay" value="15">
+                      </div>
                     </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-checkin-auto-delay" class="form-label">自动签到前延迟秒数</label>
-                      <input type="number" class="form-control" id="yuketang-js-checkin-auto-delay" value="15">
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">开启主页自动刷新可以在一定程度上阻止浏览器的睡眠策略</div>
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
+                        <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页自动刷新</label>
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-checkin-refresh-interval" class="form-label fw-medium mb-1">刷新间隔分钟数</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-checkin-refresh-interval" value="5">
+                      </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
-                      <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页防睡眠自动刷新</label>
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-checkin-refresh-interval" class="form-label">主页自动刷新间隔分钟数</label>
-                      <input type="number" class="form-control" id="yuketang-js-checkin-refresh-interval" value="5">
-                    </div>
-                    <p class="text-muted small mb-2">首次使用时，浏览器可能会阻止打开新页面，建议您点击下方按钮进行测试</p>
-                    <div class="mb-3">
-                      <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-outline-primary">测试打开新页面</button>
-                    </div>
-                    <div class="mb-3">
-                      <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">浏览器可能会阻止打开课堂页面，建议您点击下方按钮进行测试</div>
+                      <div class="d-flex gap-2">
+                        <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                        <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
                   <div class="mt-3">
-                    <h5>事件监听</h5>
-                    <p class="text-muted small mb-2">选择需要发送桌面通知的课堂事件</p>
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
-                      <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
-                    </div>
-                    <div class="form-check mb-2">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-extend">
-                      <label class="form-check-label" for="yuketang-js-el-extend">延时题目</label>
-                    </div>
-                    <div class="form-check mb-4">
-                      <input class="form-check-input" type="checkbox" id="yuketang-js-el-random">
-                      <label class="form-check-label" for="yuketang-js-el-random">随机点名</label>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">事件监听</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">选择需要发送桌面通知的课堂事件</div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-unlock">
+                        <label class="form-check-label" for="yuketang-js-el-unlock">发布题目</label>
+                      </div>
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-extend">
+                        <label class="form-check-label" for="yuketang-js-el-extend">延时题目</label>
+                      </div>
+                      <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="yuketang-js-el-random">
+                        <label class="form-check-label" for="yuketang-js-el-random">随机点名</label>
+                      </div>
                     </div>
 
-                    <h5>自动答题</h5>
-                    <div class="form-check form-switch mb-3">
-                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
-                      <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-left" class="form-label">限时题目在截止前多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-left" value="30">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-aa-time-after" class="form-label">不限时题目在收到题目后多少秒启动自动答题</label>
-                      <input type="number" class="form-control" id="yuketang-js-aa-time-after" value="15">
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动答题</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-aa-enabled">
+                        <label class="form-check-label" for="yuketang-js-aa-enabled">启用自动答题（需要配置正确的大模型设置）</label>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-aa-time-left" class="form-label fw-medium mb-1">限时题目在截止前多少秒启动自动答题</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-aa-time-left" value="30">
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-aa-time-after" class="form-label fw-medium mb-1">不限时题目在收到题目后多少秒启动自动答题</label>
+                        <input type="number" class="form-control form-control-sm" id="yuketang-js-aa-time-after" value="15">
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-llm-settings" role="tabpanel" aria-labelledby="yuketang-js-llm-settings-tab">
                   <div class="mt-3">
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-baseurl" class="form-label">API Base URL</label>
-                      <input type="text" class="form-control" id="yuketang-js-llm-baseurl" placeholder="https://...">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-apikey" class="form-label">API Key</label>
-                      <div class="input-group">
-                        <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
-                        <button class="btn" type="button" id="yuketang-js-llm-apikey-toggle">显示/隐藏</button>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">大模型配置</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-baseurl" class="form-label fw-medium mb-1">API Base URL</label>
+                        <input type="text" class="form-control form-control-sm" id="yuketang-js-llm-baseurl" placeholder="https://...">
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-apikey" class="form-label fw-medium mb-1">API Key</label>
+                        <div class="input-group input-group-sm">
+                          <input type="password" class="form-control" id="yuketang-js-llm-apikey" placeholder="sk-xxxxxx">
+                          <button class="btn btn-outline-secondary" type="button" id="yuketang-js-llm-apikey-toggle">显示/隐藏</button>
+                        </div>
+                      </div>
+                      <div class="mb-2">
+                        <label for="yuketang-js-llm-model" class="form-label fw-medium mb-1">模型名称</label>
+                        <input type="text" class="form-control form-control-sm" id="yuketang-js-llm-model">
+                      </div>
+                      <div class="mb-0">
+                        <label for="yuketang-js-llm-reasoning" class="form-label fw-medium mb-1">推理强度</label>
+                        <select class="form-select form-select-sm" id="yuketang-js-llm-reasoning">
+                          <option value="low">low</option>
+                          <option value="medium">medium</option>
+                          <option value="high">high</option>
+                          <option value="xhigh">xhigh</option>
+                        </select>
                       </div>
                     </div>
                     <div class="mb-3">
-                      <label for="yuketang-js-llm-model" class="form-label">模型名称</label>
-                      <input type="text" class="form-control" id="yuketang-js-llm-model">
-                    </div>
-                    <div class="mb-3">
-                      <label for="yuketang-js-llm-reasoning" class="form-label">推理强度</label>
-                      <select class="form-select" id="yuketang-js-llm-reasoning">
-                        <option value="low">low</option>
-                        <option value="medium">medium</option>
-                        <option value="high">high</option>
-                        <option value="xhigh">xhigh</option>
-                      </select>
-                    </div>
-                    <div class="mb-3">
-                      <button id="yuketang-js-llm-test-btn" class="btn btn-primary">测试大模型功能</button>
+                      <button id="yuketang-js-llm-test-btn" class="btn btn-sm btn-primary">测试大模型功能</button>
                     </div>
                     <div id="yuketang-js-llm-test-result" class="d-none">
                       <div id="yuketang-js-llm-test-alert" class="alert mb-0" role="alert">
@@ -231,12 +242,15 @@ class SettingsModal {
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-audio" role="tabpanel" aria-labelledby="yuketang-js-audio-tab">
                   <div class="mt-3">
-                    <div class="d-flex gap-2 mb-3">
-                      <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-warning">测试音频播放</button>
-                      <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-warning">停止所有音频</button>
+                    <h6 class="fw-semibold border-bottom pb-2 mb-3">通知音频</h6>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <div class="form-text mb-2">选择收到课堂事件时播放的提示音</div>
+                      <div id="yuketang-js-audio-options"></div>
+                      <div class="d-flex gap-2 mt-2">
+                        <button id="yuketang-js-test-audio-btn" class="btn btn-sm btn-primary">测试音频播放</button>
+                        <button id="yuketang-js-stop-audio-btn" class="btn btn-sm btn-outline-primary">停止所有音频</button>
+                      </div>
                     </div>
-                    <h5>选择音频</h5>
-                    <div id="yuketang-js-audio-options"></div>
                   </div>
                 </div>
               </div>
