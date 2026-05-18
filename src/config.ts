@@ -26,11 +26,20 @@ interface EventListenersConfig {
   randomPick: boolean;
 }
 
+interface CheckinConfig {
+  defaultFingerprint: string;
+  autoCheckinEnabled: boolean;
+  autoCheckinDelay: number;
+  autoRefreshEnabled: boolean;
+  autoRefreshInterval: number;
+}
+
 interface Config {
   audio: AudioConfig;
   llm: LlmConfig;
   autoAnswer: AutoAnswerConfig;
   eventListeners: EventListenersConfig;
+  checkin: CheckinConfig;
   hash: string;
 }
 
@@ -53,6 +62,13 @@ const DEFAULT_CONFIG: Config = {
     unlockProblem: true,
     extendTime: true,
     randomPick: true,
+  },
+  checkin: {
+    defaultFingerprint: "1",
+    autoCheckinEnabled: false,
+    autoCheckinDelay: 15,
+    autoRefreshEnabled: false,
+    autoRefreshInterval: 5,
   },
   hash: "",
 };
@@ -117,6 +133,23 @@ class ConfigManager {
           loaded.eventListeners?.randomPick ??
           DEFAULT_CONFIG.eventListeners.randomPick,
       },
+      checkin: {
+        defaultFingerprint:
+          loaded.checkin?.defaultFingerprint ??
+          DEFAULT_CONFIG.checkin.defaultFingerprint,
+        autoCheckinEnabled:
+          loaded.checkin?.autoCheckinEnabled ??
+          DEFAULT_CONFIG.checkin.autoCheckinEnabled,
+        autoCheckinDelay:
+          loaded.checkin?.autoCheckinDelay ??
+          DEFAULT_CONFIG.checkin.autoCheckinDelay,
+        autoRefreshEnabled:
+          loaded.checkin?.autoRefreshEnabled ??
+          DEFAULT_CONFIG.checkin.autoRefreshEnabled,
+        autoRefreshInterval:
+          loaded.checkin?.autoRefreshInterval ??
+          DEFAULT_CONFIG.checkin.autoRefreshInterval,
+      },
       hash: loaded.hash ?? "",
     };
   }
@@ -144,6 +177,7 @@ class ConfigManager {
       llm: cfg.llm,
       autoAnswer: cfg.autoAnswer,
       eventListeners: cfg.eventListeners,
+      checkin: cfg.checkin,
     };
   }
 
@@ -276,6 +310,15 @@ class ConfigManager {
       ...this.config.eventListeners,
       ...newConfig,
     };
+    return this._saveConfig();
+  }
+
+  getCheckinConfig(): CheckinConfig {
+    return JSON.parse(JSON.stringify(this.config.checkin)) as CheckinConfig;
+  }
+
+  setCheckinConfig(newConfig: Partial<CheckinConfig>): boolean {
+    this.config.checkin = { ...this.config.checkin, ...newConfig };
     return this._saveConfig();
   }
 }

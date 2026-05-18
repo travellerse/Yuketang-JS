@@ -44,7 +44,6 @@ export class LessonHeaderUI {
 
     const $header = $(".lesson__header");
     if ($header.length === 0) {
-      log("❓ lesson__header not found on this page");
       return;
     }
 

@@ -3,27 +3,28 @@ import "bootstrap/dist/css/bootstrap.css";
 import * as bootstrap from "bootstrap";
 import { log } from "../utils/log.js";
 import { settingsModal } from "./settings-modal.js";
+import { showToast } from "./banner.js";
+import { config } from "../config.js";
+import { FINGERPRINT_OPTIONS } from "../constants.js";
 import {
   type OnLessonClassroomItem,
   formatOnLessonItem,
   startOnLessonMonitor,
 } from "../utils/on-lesson.js";
 
-const FINGERPRINT_OPTIONS = [
-  { value: "1", label: "非 APP 扫二维码(1)" },
-  { value: "21", label: "APP 扫二维码(21)" },
-  { value: "2", label: "课堂暗号(2)" },
-  { value: "5", label: "网页端“正在上课”提示(5)" },
-  { value: "9", label: "小程序分享(9)" },
-  { value: "30", label: "观看直播回放(30)" },
-  { value: "25", label: "上课提醒(25)" },
-  { value: "80", label: "腾讯会议(80)" },
-  { value: "81", label: "答题器(81)" },
-  { value: "82", label: "点阵笔(82)" },
-  { value: "83", label: "人脸识别(83)" },
-  { value: "26", label: "分享链接(26)" },
-  { value: "0", label: "其他(0)" },
-];
+const CHECKED_LESSONS_KEY = "yuketang-js-checked-lessons";
+
+function getCheckedLessons(): string[] {
+  return GM_getValue<string[]>(CHECKED_LESSONS_KEY, []);
+}
+
+function addCheckedLesson(lessonId: string): void {
+  const lessons = getCheckedLessons();
+  if (!lessons.includes(lessonId)) {
+    lessons.push(lessonId);
+    GM_setValue(CHECKED_LESSONS_KEY, lessons);
+  }
+}
 
 export class GeneralHeaderUI {
   private $settingsBtn: JQuery | null;
@@ -113,6 +114,9 @@ export class GeneralHeaderUI {
         return;
       }
 
+      const checkinConf = config.getCheckinConfig();
+      const checkedLessons = getCheckedLessons();
+
       for (const item of items) {
         const $row = $(`
           <div class="d-flex justify-content-between align-items-center rounded px-3 py-2"
@@ -126,8 +130,60 @@ export class GeneralHeaderUI {
         $btn.on("click", () => this._showEnterClassroomModal(item));
         $row.append($btn);
         $list.append($row);
+        log(
+          `📘 Detected on-lesson classroom: ${item.classroomName} (${item.classroomId}) in course ${item.courseName} (${item.courseId})`,
+        );
+        log(`⌚️History checked lessons: ${checkedLessons.join(", ")}`);
+
+        // Auto check-in for new lessons
+        if (
+          checkinConf.autoCheckinEnabled &&
+          !checkedLessons.includes(item.lessonId)
+        ) {
+          addCheckedLesson(item.lessonId);
+          const delaySec = checkinConf.autoCheckinDelay;
+          const source = checkinConf.defaultFingerprint;
+          log(
+            `🔄 Auto check-in scheduled for ${item.lessonId} in ${delaySec}s`,
+          );
+          showToast(
+            "info",
+            "自动签到",
+            `将在 ${delaySec} 秒后自动签到「${item.courseName}」`,
+            0,
+          );
+          setTimeout(() => {
+            const url = `https://www.yuketang.cn/lesson/fullscreen/v3/${item.lessonId}?source=${source}`;
+            window.open(url, "_blank");
+            log(`✅ Auto check-in executed for ${item.lessonId}`);
+          }, delaySec * 1000);
+        }
       }
     });
+
+    // Homepage auto-refresh
+    const checkinConf = config.getCheckinConfig();
+    if (
+      checkinConf.autoRefreshEnabled &&
+      window.location.href.includes("index")
+    ) {
+      const intervalMin = checkinConf.autoRefreshInterval;
+      log(
+        `🔄 Homepage auto-refresh enabled, will reload in ${intervalMin} min`,
+      );
+      showToast(
+        "info",
+        "自动刷新",
+        `当前页面将在 ${intervalMin} 分钟后自动刷新`,
+        0,
+      );
+      setTimeout(
+        () => {
+          location.reload();
+        },
+        intervalMin * 60 * 1000,
+      );
+    }
   }
 
   private _showEnterClassroomModal(item: OnLessonClassroomItem): void {
@@ -176,10 +232,15 @@ export class GeneralHeaderUI {
     const $modal = $(`#${modalId}`);
     const modalInstance = new bootstrap.Modal($modal[0]);
 
+    // Set default fingerprint from config
+    const checkinConfig = config.getCheckinConfig();
+    $(`#yuketang-js-fingerprint-select`).val(checkinConfig.defaultFingerprint);
+
     $("#yuketang-js-enter-confirm-btn").on("click", () => {
       const source = $("#yuketang-js-fingerprint-select").val() as string;
       const url = `https://www.yuketang.cn/lesson/fullscreen/v3/${item.lessonId}?source=${source}`;
       window.open(url, "_blank");
+      addCheckedLesson(item.lessonId);
       modalInstance.hide();
     });
 

@@ -4,6 +4,8 @@ import * as bootstrap from "bootstrap";
 import { log } from "../utils/log.js";
 import { audioController } from "../utils/audio-controller.js";
 import { config } from "../config.js";
+import { FINGERPRINT_OPTIONS } from "../constants.js";
+import { showToast } from "./banner.js";
 import OpenAI from "openai";
 
 export function showStaleConfigWarning(): void {
@@ -101,7 +103,12 @@ class SettingsModal {
             <div class="modal-body">
               <ul class="nav nav-tabs" id="yuketang-js-settings-tabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="yuketang-js-classroom-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom" type="button" role="tab" aria-controls="yuketang-js-classroom" aria-selected="true">
+                  <button class="nav-link active" id="yuketang-js-checkin-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-checkin" type="button" role="tab" aria-controls="yuketang-js-checkin" aria-selected="true">
+                    签到
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="yuketang-js-classroom-tab" data-bs-toggle="tab" data-bs-target="#yuketang-js-classroom" type="button" role="tab" aria-controls="yuketang-js-classroom" aria-selected="false">
                     课堂
                   </button>
                 </li>
@@ -117,7 +124,43 @@ class SettingsModal {
                 </li>
               </ul>
               <div class="tab-content" id="yuketang-js-settings-tabs-content">
-                <div class="tab-pane fade show active" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
+                <div class="tab-pane fade show active" id="yuketang-js-checkin" role="tabpanel" aria-labelledby="yuketang-js-checkin-tab">
+                  <div class="mt-3">
+                    <h5>签到指纹设置</h5>
+                    <p class="text-muted small mb-2">选择签到时使用的默认指纹</p>
+                    <div class="mb-4">
+                      <label for="yuketang-js-checkin-fingerprint" class="form-label">默认签到指纹</label>
+                      <select class="form-select" id="yuketang-js-checkin-fingerprint"></select>
+                    </div>
+
+                    <h5>自动签到设置</h5>
+                    <p class="text-muted small mb-2">需要打开主页才能在有课堂上课时自动进行签到</p>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
+                      <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-checkin-auto-delay" class="form-label">自动签到前延迟秒数</label>
+                      <input type="number" class="form-control" id="yuketang-js-checkin-auto-delay" value="15">
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
+                      <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页防睡眠自动刷新</label>
+                    </div>
+                    <div class="mb-3">
+                      <label for="yuketang-js-checkin-refresh-interval" class="form-label">主页自动刷新间隔分钟数</label>
+                      <input type="number" class="form-control" id="yuketang-js-checkin-refresh-interval" value="5">
+                    </div>
+                    <p class="text-muted small mb-2">首次使用时，浏览器可能会阻止打开新页面，建议您点击下方按钮进行测试</p>
+                    <div class="mb-3">
+                      <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-outline-primary">测试打开新页面</button>
+                    </div>
+                    <div class="mb-3">
+                      <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
                   <div class="mt-3">
                     <h5>事件监听</h5>
                     <p class="text-muted small mb-2">选择需要发送桌面通知的课堂事件</p>
@@ -210,6 +253,7 @@ class SettingsModal {
     this._populateAutoAnswerOptions();
     this._populateLlmOptions();
     this._populateAudioOptions();
+    this._populateCheckinOptions();
   }
 
   private _populateEventListenersOptions(): void {
@@ -392,6 +436,59 @@ class SettingsModal {
       // Default to first option
       $audioOptions.find("input[type='radio']").first().prop("checked", true);
     }
+  }
+
+  private _populateCheckinOptions(): void {
+    const checkinConfig = config.getCheckinConfig();
+    const $fingerprint = $("#yuketang-js-checkin-fingerprint");
+    const $autoEnabled = $("#yuketang-js-checkin-auto-enabled");
+    const $autoDelay = $("#yuketang-js-checkin-auto-delay");
+    const $autoRefresh = $("#yuketang-js-checkin-auto-refresh");
+    const $refreshInterval = $("#yuketang-js-checkin-refresh-interval");
+
+    // Populate fingerprint dropdown
+    FINGERPRINT_OPTIONS.forEach((opt) => {
+      $fingerprint.append(`<option value="${opt.value}">${opt.label}</option>`);
+    });
+    $fingerprint.val(checkinConfig.defaultFingerprint);
+
+    $autoEnabled.prop("checked", checkinConfig.autoCheckinEnabled);
+    $autoDelay.val(checkinConfig.autoCheckinDelay);
+    $autoRefresh.prop("checked", checkinConfig.autoRefreshEnabled);
+    $refreshInterval.val(checkinConfig.autoRefreshInterval);
+
+    const updateConfig = () => {
+      config.setCheckinConfig({
+        defaultFingerprint: $fingerprint.val() as string,
+        autoCheckinEnabled: Boolean($autoEnabled.prop("checked")),
+        autoCheckinDelay: parseInt($autoDelay.val() as string, 10) || 15,
+        autoRefreshEnabled: Boolean($autoRefresh.prop("checked")),
+        autoRefreshInterval:
+          parseInt($refreshInterval.val() as string, 10) || 5,
+      });
+    };
+
+    $fingerprint.on("change", updateConfig);
+    $autoEnabled.on("change", updateConfig);
+    $autoDelay.on("change", updateConfig);
+    $autoRefresh.on("change", updateConfig);
+    $refreshInterval.on("change", updateConfig);
+
+    $("#yuketang-js-checkin-test-open").on("click", () => {
+      window.open("/lesson/fullscreen/v3", "_blank");
+      showToast(
+        "info",
+        "测试打开新页面",
+        "已请求打开新页面，如果您没有看到有新页面打开，请检查浏览器的拦截提示；如果新页面已正常打开，则没有问题，您可将其关闭",
+        0,
+      );
+    });
+
+    $("#yuketang-js-checkin-clear-cache").on("click", () => {
+      GM_setValue("yuketang-js-checked-lessons", []);
+      log("🗑️ Checked lessons cache cleared");
+      showToast("success", "缓存已清除", "已签到课程缓存已清除");
+    });
   }
 }
 

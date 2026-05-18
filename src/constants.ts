@@ -1,0 +1,15 @@
+export const FINGERPRINT_OPTIONS = [
+  { value: "1", label: "非 APP 扫二维码(1)" },
+  { value: "21", label: "APP 扫二维码(21)" },
+  { value: "2", label: "课堂暗号(2)" },
+  { value: "5", label: '网页端“正在上课”提示(5)' },
+  { value: "9", label: "小程序分享(9)" },
+  { value: "30", label: "观看直播回放(30)" },
+  { value: "25", label: "上课提醒(25)" },
+  { value: "80", label: "腾讯会议(80)" },
+  { value: "81", label: "答题器(81)" },
+  { value: "82", label: "点阵笔(82)" },
+  { value: "83", label: "人脸识别(83)" },
+  { value: "26", label: "分享链接(26)" },
+  { value: "0", label: "其他(0)" },
+];
