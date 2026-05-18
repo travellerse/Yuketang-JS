@@ -29,10 +29,12 @@ function addCheckedLesson(lessonId: string): void {
 export class GeneralHeaderUI {
   private $settingsBtn: JQuery | null;
   private injected: boolean;
+  private checkingLessons: string[];
 
   constructor() {
     this.$settingsBtn = null;
     this.injected = false;
+    this.checkingLessons = [];
   }
 
   update(): void {
@@ -117,6 +119,7 @@ export class GeneralHeaderUI {
       const checkinConf = config.getCheckinConfig();
       const checkedLessons = getCheckedLessons();
 
+      // For each on-lesson item
       for (const item of items) {
         const $row = $(`
           <div class="d-flex justify-content-between align-items-center rounded px-3 py-2"
@@ -130,19 +133,18 @@ export class GeneralHeaderUI {
         $btn.on("click", () => this._showEnterClassroomModal(item));
         $row.append($btn);
         $list.append($row);
-        log(
-          `📘 Detected on-lesson classroom: ${item.classroomName} (${item.classroomId}) in course ${item.courseName} (${item.courseId})`,
-        );
-        log(`⌚️History checked lessons: ${checkedLessons.join(", ")}`);
 
         // Auto check-in for new lessons
         if (
           checkinConf.autoCheckinEnabled &&
+          !this.checkingLessons.includes(item.lessonId) &&
           !checkedLessons.includes(item.lessonId)
         ) {
-          addCheckedLesson(item.lessonId);
           const delaySec = checkinConf.autoCheckinDelay;
           const source = checkinConf.defaultFingerprint;
+
+          // Mark as 'checking' to avoid duplicate scheduling
+          this.checkingLessons.push(item.lessonId);
           log(
             `🔄 Auto check-in scheduled for ${item.lessonId} in ${delaySec}s`,
           );
@@ -152,10 +154,20 @@ export class GeneralHeaderUI {
             `将在 ${delaySec} 秒后自动签到「${item.courseName}」`,
             0,
           );
+
           setTimeout(() => {
             const url = `https://www.yuketang.cn/lesson/fullscreen/v3/${item.lessonId}?source=${source}`;
             window.open(url, "_blank");
+
+            // Mark as 'checked' in persistent storage to avoid cross-tab duplication
+            addCheckedLesson(item.lessonId);
             log(`✅ Auto check-in executed for ${item.lessonId}`);
+            showToast(
+              "success",
+              "自动签到",
+              `已请求打开新页面用于进入「${item.courseName}」`,
+              0,
+            );
           }, delaySec * 1000);
         }
       }

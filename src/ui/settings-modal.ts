@@ -162,6 +162,12 @@ class SettingsModal {
                         <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
                       </div>
                     </div>
+                    <div id="yuketang-js-checkin-reload-hint" class="rounded px-3 py-2 mb-3 d-none alert alert-warning mb-0 py-2 px-3" role="alert">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="small">当前所做的修改需要刷新页面才能生效</span>
+                        <button id="yuketang-js-checkin-reload-btn" class="btn btn-sm btn-warning">立即刷新</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="tab-pane fade" id="yuketang-js-classroom" role="tabpanel" aria-labelledby="yuketang-js-classroom-tab">
@@ -487,6 +493,17 @@ class SettingsModal {
     $autoDelay.on("change", updateConfig);
     $autoRefresh.on("change", updateConfig);
     $refreshInterval.on("change", updateConfig);
+
+    const $reloadHint = $("#yuketang-js-checkin-reload-hint");
+    const showReloadHint = () => $reloadHint.removeClass("d-none");
+    $autoEnabled.on("change", showReloadHint);
+    $autoDelay.on("change", showReloadHint);
+    $autoRefresh.on("change", showReloadHint);
+    $refreshInterval.on("change", showReloadHint);
+
+    $("#yuketang-js-checkin-reload-btn").on("click", () => {
+      location.reload();
+    });
 
     $("#yuketang-js-checkin-test-open").on("click", () => {
       window.open("/lesson/fullscreen/v3", "_blank");
