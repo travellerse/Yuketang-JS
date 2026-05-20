@@ -204,9 +204,22 @@ export class GeneralHeaderUI {
         `已开启主页自动刷新，当前页面将每隔 ${intervalMin} 分钟自动刷新`,
         0,
       );
+      const expectedTime = Date.now() + intervalMin * 60 * 1000;
       setTimeout(
         () => {
-          location.reload();
+          const driftSec = (Date.now() - expectedTime) / 1000;
+          log(`🔄 Homepage auto-refresh fired, drift: ${driftSec.toFixed(3)}s`);
+          if (driftSec > 60) {
+            log("⚠️ Detected significant delay in auto-refresh");
+            showToast(
+              "warning",
+              "自动签到",
+              "检测到页面可能进入过睡眠状态，可能原因：①页面被浏览器的标签页节能策略限制、②计算机进入过睡眠状态，建议您：①添加雨课堂域名到浏览器的节能白名单、②关闭计算机的自动睡眠功能",
+              0,
+            );
+          } else {
+            location.reload();
+          }
         },
         intervalMin * 60 * 1000,
       );

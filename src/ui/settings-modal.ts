@@ -134,7 +134,8 @@ class SettingsModal {
 
                     <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动签到设置</h6>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
-                      <div class="form-text mb-2">您需要打开主页才能在有课堂上课时自动进行签到</div>
+                      <div class="form-text mb-2"><b>注意</b>：您需要<b>打开雨课堂主页</b>才能在有课堂上课时自动进行签到！</div>
+                      <div class="form-text mb-2"><b>注意</b>：您需要将雨课堂域名添加到浏览器“标签页睡眠”或类似节能策略的白名单中，以防自动签到功能失效！</div>
                       <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
                         <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
@@ -145,7 +146,7 @@ class SettingsModal {
                       </div>
                     </div>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
-                      <div class="form-text mb-2">开启主页自动刷新可以在一定程度上阻止浏览器的睡眠策略</div>
+                      <div class="form-text mb-2">建议您开启主页自动刷新功能，从而防止账号登录过期</div>
                       <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
                         <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页自动刷新</label>
