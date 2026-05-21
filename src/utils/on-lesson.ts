@@ -12,6 +12,7 @@ export interface OnLessonClassroomItem {
 function getRoleLabel(role: number): string {
   if (role === 1) return "教";
   if (role === 5) return "听";
+  if (role === 6) return "旁听";
   return "未知";
 }
 

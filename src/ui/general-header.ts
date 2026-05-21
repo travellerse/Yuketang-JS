@@ -138,7 +138,8 @@ export class GeneralHeaderUI {
         if (
           checkinConf.autoCheckinEnabled &&
           !this.checkingLessons.includes(item.lessonId) &&
-          !checkedLessons.includes(item.lessonId)
+          !checkedLessons.includes(item.lessonId) &&
+          (checkinConf.autoCheckinAudit || item.role === 5)
         ) {
           const delaySec = checkinConf.autoCheckinDelay;
           const source = checkinConf.defaultFingerprint;

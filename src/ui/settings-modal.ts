@@ -158,8 +158,19 @@ class SettingsModal {
                     </div>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
                       <div class="form-text mb-2">浏览器可能会阻止打开课堂页面，建议您点击下方按钮进行测试</div>
-                      <div class="d-flex gap-2">
-                        <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                      <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                    </div>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <a class="d-flex justify-content-between align-items-center text-decoration-none text-body user-select-none"
+                         data-bs-toggle="collapse" href="#yuketang-js-checkin-advanced" role="button" aria-expanded="false">
+                        <span class="fw-medium small">高级选项</span>
+                        <span id="yuketang-js-checkin-advanced-chevron" class="small" style="transition: transform 0.2s;">▸</span>
+                      </a>
+                      <div id="yuketang-js-checkin-advanced" class="collapse mt-2">
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="checkbox" id="yuketang-js-checkin-audit">
+                          <label class="form-check-label small" for="yuketang-js-checkin-audit">旁听生或其他身份课程也自动签到</label>
+                        </div>
                         <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
                       </div>
                     </div>
@@ -466,6 +477,7 @@ class SettingsModal {
     const $autoDelay = $("#yuketang-js-checkin-auto-delay");
     const $autoRefresh = $("#yuketang-js-checkin-auto-refresh");
     const $refreshInterval = $("#yuketang-js-checkin-refresh-interval");
+    const $audit = $("#yuketang-js-checkin-audit");
 
     // Populate fingerprint dropdown
     FINGERPRINT_OPTIONS.forEach((opt) => {
@@ -477,6 +489,7 @@ class SettingsModal {
     $autoDelay.val(checkinConfig.autoCheckinDelay);
     $autoRefresh.prop("checked", checkinConfig.autoRefreshEnabled);
     $refreshInterval.val(checkinConfig.autoRefreshInterval);
+    $audit.prop("checked", checkinConfig.autoCheckinAudit);
 
     const updateConfig = () => {
       config.setCheckinConfig({
@@ -486,6 +499,7 @@ class SettingsModal {
         autoRefreshEnabled: Boolean($autoRefresh.prop("checked")),
         autoRefreshInterval:
           parseInt($refreshInterval.val() as string, 10) || 5,
+        autoCheckinAudit: Boolean($audit.prop("checked")),
       });
     };
 
@@ -494,6 +508,7 @@ class SettingsModal {
     $autoDelay.on("change", updateConfig);
     $autoRefresh.on("change", updateConfig);
     $refreshInterval.on("change", updateConfig);
+    $audit.on("change", updateConfig);
 
     const $reloadHint = $("#yuketang-js-checkin-reload-hint");
     const showReloadHint = () => $reloadHint.removeClass("d-none");
@@ -501,9 +516,20 @@ class SettingsModal {
     $autoDelay.on("change", showReloadHint);
     $autoRefresh.on("change", showReloadHint);
     $refreshInterval.on("change", showReloadHint);
+    $audit.on("change", showReloadHint);
 
     $("#yuketang-js-checkin-reload-btn").on("click", () => {
       location.reload();
+    });
+
+    // Advanced options chevron animation
+    const $advanced = $("#yuketang-js-checkin-advanced");
+    const $chevron = $("#yuketang-js-checkin-advanced-chevron");
+    $advanced.on("show.bs.collapse", () => {
+      $chevron.css("transform", "rotate(90deg)");
+    });
+    $advanced.on("hide.bs.collapse", () => {
+      $chevron.css("transform", "rotate(0deg)");
     });
 
     $("#yuketang-js-checkin-test-open").on("click", () => {
