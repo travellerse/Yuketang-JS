@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Yuketang-JS
 // @namespace    https://www.yuketang.cn/
-// @version      0.6.0
+// @version      0.7.0
 // @author       Harry Huang
 // @description  A Browser Script to Enhance Yuketang Experience
 // @license      MIT
@@ -17232,7 +17232,8 @@ isReadableStream
 
                     <h6 class="fw-semibold border-bottom pb-2 mb-3 mt-4">自动签到设置</h6>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
-                      <div class="form-text mb-2">您需要打开主页才能在有课堂上课时自动进行签到</div>
+                      <div class="form-text mb-2"><b>注意</b>：您需要<b>打开雨课堂主页</b>才能在有课堂上课时自动进行签到！</div>
+                      <div class="form-text mb-2"><b>注意</b>：您需要将雨课堂域名添加到浏览器“标签页睡眠”或类似节能策略的白名单中，以防自动签到功能失效！</div>
                       <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-enabled">
                         <label class="form-check-label" for="yuketang-js-checkin-auto-enabled">开启自动签到</label>
@@ -17243,7 +17244,7 @@ isReadableStream
                       </div>
                     </div>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
-                      <div class="form-text mb-2">开启主页自动刷新可以在一定程度上阻止浏览器的睡眠策略</div>
+                      <div class="form-text mb-2">建议您开启主页自动刷新功能，从而防止账号登录过期</div>
                       <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" role="switch" id="yuketang-js-checkin-auto-refresh">
                         <label class="form-check-label" for="yuketang-js-checkin-auto-refresh">开启主页自动刷新</label>
@@ -17255,8 +17256,19 @@ isReadableStream
                     </div>
                     <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
                       <div class="form-text mb-2">浏览器可能会阻止打开课堂页面，建议您点击下方按钮进行测试</div>
-                      <div class="d-flex gap-2">
-                        <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                      <button id="yuketang-js-checkin-test-open" class="btn btn-sm btn-primary">测试打开新页面</button>
+                    </div>
+                    <div class="rounded px-3 py-2 mb-3" style="background: #f8f9fa;">
+                      <a class="d-flex justify-content-between align-items-center text-decoration-none text-body user-select-none"
+                         data-bs-toggle="collapse" href="#yuketang-js-checkin-advanced" role="button" aria-expanded="false">
+                        <span class="fw-medium small">高级选项</span>
+                        <span id="yuketang-js-checkin-advanced-chevron" class="small" style="transition: transform 0.2s;">▸</span>
+                      </a>
+                      <div id="yuketang-js-checkin-advanced" class="collapse mt-2">
+                        <div class="form-check mb-2">
+                          <input class="form-check-input" type="checkbox" id="yuketang-js-checkin-audit">
+                          <label class="form-check-label small" for="yuketang-js-checkin-audit">旁听生或其他身份课程也自动签到</label>
+                        </div>
                         <button id="yuketang-js-checkin-clear-cache" class="btn btn-sm btn-outline-danger">清除已签到课程缓存</button>
                       </div>
                     </div>
@@ -17526,6 +17538,7 @@ isReadableStream
       const $autoDelay = $("#yuketang-js-checkin-auto-delay");
       const $autoRefresh = $("#yuketang-js-checkin-auto-refresh");
       const $refreshInterval = $("#yuketang-js-checkin-refresh-interval");
+      const $audit = $("#yuketang-js-checkin-audit");
       FINGERPRINT_OPTIONS.forEach((opt) => {
         $fingerprint.append(`<option value="${opt.value}">${opt.label}</option>`);
       });
@@ -17534,13 +17547,15 @@ isReadableStream
       $autoDelay.val(checkinConfig.autoCheckinDelay);
       $autoRefresh.prop("checked", checkinConfig.autoRefreshEnabled);
       $refreshInterval.val(checkinConfig.autoRefreshInterval);
+      $audit.prop("checked", checkinConfig.autoCheckinAudit);
       const updateConfig = () => {
         config.setCheckinConfig({
           defaultFingerprint: $fingerprint.val(),
           autoCheckinEnabled: Boolean($autoEnabled.prop("checked")),
           autoCheckinDelay: parseInt($autoDelay.val(), 10) || 15,
           autoRefreshEnabled: Boolean($autoRefresh.prop("checked")),
-          autoRefreshInterval: parseInt($refreshInterval.val(), 10) || 5
+          autoRefreshInterval: parseInt($refreshInterval.val(), 10) || 5,
+          autoCheckinAudit: Boolean($audit.prop("checked"))
         });
       };
       $fingerprint.on("change", updateConfig);
@@ -17548,14 +17563,24 @@ isReadableStream
       $autoDelay.on("change", updateConfig);
       $autoRefresh.on("change", updateConfig);
       $refreshInterval.on("change", updateConfig);
+      $audit.on("change", updateConfig);
       const $reloadHint = $("#yuketang-js-checkin-reload-hint");
       const showReloadHint = () => $reloadHint.removeClass("d-none");
       $autoEnabled.on("change", showReloadHint);
       $autoDelay.on("change", showReloadHint);
       $autoRefresh.on("change", showReloadHint);
       $refreshInterval.on("change", showReloadHint);
+      $audit.on("change", showReloadHint);
       $("#yuketang-js-checkin-reload-btn").on("click", () => {
         location.reload();
+      });
+      const $advanced = $("#yuketang-js-checkin-advanced");
+      const $chevron = $("#yuketang-js-checkin-advanced-chevron");
+      $advanced.on("show.bs.collapse", () => {
+        $chevron.css("transform", "rotate(90deg)");
+      });
+      $advanced.on("hide.bs.collapse", () => {
+        $chevron.css("transform", "rotate(0deg)");
       });
       $("#yuketang-js-checkin-test-open").on("click", () => {
         window.open("/lesson/fullscreen/v3", "_blank");
@@ -17587,8 +17612,8 @@ isReadableStream
     },
     autoAnswer: {
       enabled: false,
-      timeLeftThreshold: 30,
-      timeAfterSend: 15
+      timeLeftThreshold: 300,
+      timeAfterSend: 10
     },
     eventListeners: {
       unlockProblem: true,
@@ -17598,9 +17623,10 @@ isReadableStream
     checkin: {
       defaultFingerprint: "1",
       autoCheckinEnabled: false,
-      autoCheckinDelay: 15,
+      autoCheckinDelay: 10,
       autoRefreshEnabled: false,
-      autoRefreshInterval: 5
+      autoRefreshInterval: 30,
+      autoCheckinAudit: false
     },
     hash: ""
   };
@@ -17654,7 +17680,8 @@ isReadableStream
           autoCheckinEnabled: loaded.checkin?.autoCheckinEnabled ?? DEFAULT_CONFIG.checkin.autoCheckinEnabled,
           autoCheckinDelay: loaded.checkin?.autoCheckinDelay ?? DEFAULT_CONFIG.checkin.autoCheckinDelay,
           autoRefreshEnabled: loaded.checkin?.autoRefreshEnabled ?? DEFAULT_CONFIG.checkin.autoRefreshEnabled,
-          autoRefreshInterval: loaded.checkin?.autoRefreshInterval ?? DEFAULT_CONFIG.checkin.autoRefreshInterval
+          autoRefreshInterval: loaded.checkin?.autoRefreshInterval ?? DEFAULT_CONFIG.checkin.autoRefreshInterval,
+          autoCheckinAudit: loaded.checkin?.autoCheckinAudit ?? DEFAULT_CONFIG.checkin.autoCheckinAudit
         },
         hash: loaded.hash ?? ""
       };
@@ -17958,6 +17985,7 @@ setActive() {
   function getRoleLabel(role) {
     if (role === 1) return "教";
     if (role === 5) return "听";
+    if (role === 6) return "旁听";
     return "未知";
   }
   function formatOnLessonItem(item) {
@@ -18104,7 +18132,7 @@ setActive() {
           $btn.on("click", () => this._showEnterClassroomModal(item));
           $row.append($btn);
           $list.append($row);
-          if (checkinConf2.autoCheckinEnabled && !this.checkingLessons.includes(item.lessonId) && !checkedLessons.includes(item.lessonId)) {
+          if (checkinConf2.autoCheckinEnabled && !this.checkingLessons.includes(item.lessonId) && !checkedLessons.includes(item.lessonId) && (checkinConf2.autoCheckinAudit || item.role === 5)) {
             const delaySec = checkinConf2.autoCheckinDelay;
             const source = checkinConf2.defaultFingerprint;
             this.checkingLessons.push(item.lessonId);
@@ -18159,9 +18187,22 @@ setActive() {
           `已开启主页自动刷新，当前页面将每隔 ${intervalMin} 分钟自动刷新`,
           0
         );
+        const expectedTime = Date.now() + intervalMin * 60 * 1e3;
         setTimeout(
           () => {
-            location.reload();
+            const driftSec = (Date.now() - expectedTime) / 1e3;
+            log(`🔄 Homepage auto-refresh fired, drift: ${driftSec.toFixed(3)}s`);
+            if (driftSec > 60) {
+              log("⚠️ Detected significant delay in auto-refresh");
+              showToast(
+                "warning",
+                "自动签到",
+                "检测到页面可能进入过睡眠状态，可能原因：①页面被浏览器的标签页节能策略限制、②计算机进入过睡眠状态，建议您：①添加雨课堂域名到浏览器的节能白名单、②关闭计算机的自动睡眠功能",
+                0
+              );
+            } else {
+              location.reload();
+            }
           },
           intervalMin * 60 * 1e3
         );
