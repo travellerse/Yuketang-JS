@@ -56,8 +56,8 @@ const DEFAULT_CONFIG: Config = {
   },
   autoAnswer: {
     enabled: false,
-    timeLeftThreshold: 30,
-    timeAfterSend: 15,
+    timeLeftThreshold: 300,
+    timeAfterSend: 10,
   },
   eventListeners: {
     unlockProblem: true,
@@ -67,9 +67,9 @@ const DEFAULT_CONFIG: Config = {
   checkin: {
     defaultFingerprint: "1",
     autoCheckinEnabled: false,
-    autoCheckinDelay: 15,
+    autoCheckinDelay: 10,
     autoRefreshEnabled: false,
-    autoRefreshInterval: 5,
+    autoRefreshInterval: 30,
     autoCheckinAudit: false,
   },
   hash: "",
